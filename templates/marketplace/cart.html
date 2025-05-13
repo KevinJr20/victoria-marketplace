@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2>Your Cart</h2>
+    {% if cart_items %}
+        <ul>
+            {% for item in cart_items %}
+                <li>
+                    {{ item.product.name }} - Quantity: {{ item.quantity }} - Total: KES {{ item.total_price }}
+                    <a href="{% url 'marketplace:initiate_payment' item.id %}">Checkout</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Your cart is empty.</p>
+    {% endif %}
+    <a href="{% url 'marketplace:home' %}">Back to Home</a>
+{% endblock %}

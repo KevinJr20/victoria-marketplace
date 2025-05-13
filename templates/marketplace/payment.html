@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2>Payment</h2>
+    <p>Processing payment of KES {{ cart_item.total_price }}...</p>
+    <p>Response: {{ response }}</p>
+    <a href="{% url 'marketplace:home' %}">Back to Home</a>
+{% endblock %}

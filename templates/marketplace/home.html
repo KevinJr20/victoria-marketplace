@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2>Search Products</h2>
+    <form method="get" action="{% url 'marketplace:home' %}">
+        <input type="text" name="q" placeholder="Search products..." value="{{ query }}">
+        <select name="category">
+            <option value="">All Categories</option>
+            {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+            {% endfor %}
+        </select>
+        <input type="number" name="price_min" placeholder="Min Price">
+        <input type="number" name="price_max" placeholder="Max Price">
+        <button type="submit">Search</button>
+    </form>
+
+    <h2>Products</h2>
+    <div class="product-list">
+        {% for product in products %}
+            <div class="product">
+                <h3>{{ product.name }}</h3>
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-width: 200px;">
+                {% endif %}
+                <p>{{ product.description|truncatewords:20 }}</p>
+                <p>Price: KES {{ product.price }}</p>
+                <p>Category: {% if product.category %}{{ product.category.name }}{% else %}Uncategorized{% endif %}</p>
+                <p>Seller: {{ product.seller.username }}</p>
+                <a href="{% url 'marketplace:product_detail' product.id %}">View Details</a>
+                <a href="{% url 'marketplace:add_to_cart' product.id %}">Add to Cart</a>
+            </div>
+        {% empty %}
+            <p>Oops! No products available at the moment.</p>
+        {% endfor %}
+    </div>
+    {% if user.is_authenticated %}
+        <h2>Your Cart</h2>
+        {% with cart_items=user.cartitem_set.all %}
+            {% if cart_items %}
+                <ul>
+                    {% for item in cart_items %}
+                        <li>{{ item.product.name }} - Quantity: {{ item.quantity }} - Total: KES {{ item.total_price }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Your cart is empty.</p>
+            {% endif %}
+        {% endwith %}
+    {% endif %}
+{% endblock %}

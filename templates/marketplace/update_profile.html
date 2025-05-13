@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2>Update Your Profile</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ profile_form.as_p }}
+        <h4>Change Password</h4>
+        {{ password_form.as_p }}
+        <button type="submit">Save Changes</button>
+    </form>
+    <a href="{% url 'marketplace:profile' %}">Cancel</a>
+{% endblock %}

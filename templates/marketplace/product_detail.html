@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2>{{ product.name }}</h2>
+    {% if product.image %}
+        <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-width: 300px;">
+    {% endif %}
+    <p>{{ product.description }}</p>
+    <p>Price: KES {{ product.price }}</p>
+    <p>Category: {% if product.category %}{{ product.category.name }}{% else %}Uncategorized{% endif %}</p>
+    <p>Seller: {{ product.seller.username }}</p>
+    <a href="{% url 'marketplace:add_to_cart' product.id %}">Add to Cart</a>
+    <a href="{% url 'marketplace:home' %}">Back to Home</a>
+{% endblock %}
