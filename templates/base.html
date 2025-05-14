@@ -1,39 +1,66 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Victoria Marketplace</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% load static %}
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="{% static 'css/output.css' %}" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a90e2;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3b82f6;
+        }
+    </style>
 </head>
-<body>
-    <header>
-        <h1>Victoria Marketplace</h1>
-        <nav>
-            <a href="{% url 'marketplace:home' %}">Home</a>
-            {% if user.is_authenticated %}
-                <a href="{% url 'marketplace:profile' %}">Profile</a>
-                <a href="{% url 'marketplace:cart' %}">Cart</a>
-                <a href="{% url 'marketplace:order_history' %}">Orders</a>
-                <a href="{% url 'marketplace:logout' %}">Logout</a>
-                {% if user.is_seller %}
-                    <a href="{% url 'marketplace:seller_dashboard' %}">Seller Dashboard</a>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-semibold">
+                <a href="{% url 'marketplace:home' %}">Victoria Marketplace</a>
+            </h1>
+            <nav class="space-x-4">
+                <a href="{% url 'marketplace:home' %}" class="hover:underline">Home</a>
+                <a href="{% url 'marketplace:cart' %}" class="hover:underline">Cart</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'marketplace:orders' %}" class="hover:underline">Orders</a>
+                    <a href="{% url 'marketplace:logout' %}" class="hover:underline">Logout</a>
+                {% else %}
+                    <a href="{% url 'marketplace:login' %}" class="hover:underline">Login</a>
+                    <a href="{% url 'marketplace:register' %}" class="hover:underline">Register</a>
                 {% endif %}
-
-                {% if user.is_superuser %}
-                <a href="{% url 'admin:index' %}">Admin</a>
-                {% endif %}
-
-            {% else %}
-                <a href="{% url 'marketplace:login' %}">Login</a>
-                <a href="{% url 'marketplace:register' %}">Register</a>
-            {% endif %}
-        </nav>
+                <a href="{% url 'marketplace:seller_dashboard' %}" class="hover:underline">Sell</a>
+            </nav>
+        </div>
     </header>
-    <main>
+
+    <!-- Main Content -->
+    <main class="min-h-screen">
         {% block content %}
         {% endblock %}
     </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p>© 2025 Victoria Marketplace. All rights reserved.</p>
+            <p class="mt-2">Built for SMEs</p>
+        </div>
+    </footer>
 </body>
 </html>

@@ -1,50 +1,110 @@
 {% extends 'base.html' %}
-{% block content %}
-    <h2>Search Products</h2>
-    <form method="get" action="{% url 'marketplace:home' %}">
-        <input type="text" name="q" placeholder="Search products..." value="{{ query }}">
-        <select name="category">
-            <option value="">All Categories</option>
-            {% for category in categories %}
-                <option value="{{ category.id }}">{{ category.name }}</option>
-            {% endfor %}
-        </select>
-        <input type="number" name="price_min" placeholder="Min Price">
-        <input type="number" name="price_max" placeholder="Max Price">
-        <button type="submit">Search</button>
-    </form>
 
-    <h2>Products</h2>
-    <div class="product-list">
-        {% for product in products %}
-            <div class="product">
-                <h3>{{ product.name }}</h3>
-                {% if product.image %}
-                    <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-width: 200px;">
-                {% endif %}
-                <p>{{ product.description|truncatewords:20 }}</p>
-                <p>Price: KES {{ product.price }}</p>
-                <p>Category: {% if product.category %}{{ product.category.name }}{% else %}Uncategorized{% endif %}</p>
-                <p>Seller: {{ product.seller.username }}</p>
-                <a href="{% url 'marketplace:product_detail' product.id %}">View Details</a>
-                <a href="{% url 'marketplace:add_to_cart' product.id %}">Add to Cart</a>
-            </div>
-        {% empty %}
-            <p>Oops! No products available at the moment.</p>
-        {% endfor %}
-    </div>
-    {% if user.is_authenticated %}
-        <h2>Your Cart</h2>
-        {% with cart_items=user.cartitem_set.all %}
-            {% if cart_items %}
-                <ul>
-                    {% for item in cart_items %}
-                        <li>{{ item.product.name }} - Quantity: {{ item.quantity }} - Total: KES {{ item.total_price }}</li>
+{% block content %}
+    <div class="container mx-auto px-4 py-8">
+        <!-- Search Form -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-8">
+            <form method="get" action="{% url 'marketplace:search_products' %}" class="flex flex-col sm:flex-row gap-4">
+                <input type="text" name="q" placeholder="Search products..." class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1">
+                <select name="category" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
                     {% endfor %}
-                </ul>
+                </select>
+                <input type="number" name="min_price" placeholder="Min Price" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-32" min="0">
+                <input type="number" name="max_price" placeholder="Max Price" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-32" min="0">
+                <button type="submit" class="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors duration-300">Search</button>
+            </form>
+        </div>
+
+        <!-- Product Grid -->
+        {% if products %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for product in products %}
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-56 object-cover">
+                        {% else %}
+                            <div class="w-full h-56 bg-gray-200 flex items-center justify-center">
+                                <span class="text-gray-500">No Image</span>
+                            </div>
+                        {% endif %}
+                        <div class="p-4">
+                            <h2 class="text-lg font-semibold text-gray-800">{{ product.name }}</h2>
+                            <p class="text-gray-600">KSh {{ product.price }}</p>
+                            <button onclick="addToCart({{ product.id }})" class="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center">
+                                <span class="add-to-cart-text">Add to Cart</span>
+                                <svg class="spinner hidden w-5 h-5 ml-2 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-10">
+                <p class="text-gray-500 text-lg">Oops! No products available at the moment.</p>
+                <a href="{% url 'marketplace:seller_dashboard' %}" class="text-blue-600 hover:underline">Are you a seller? Add products now!</a>
+            </div>
+        {% endif %}
+
+        <!-- Cart Summary -->
+        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Cart Summary</h2>
+            {% if cart_items %}
+                <p class="text-gray-600">Items: <span id="cart-count">{{ cart_items.count }}</span></p>
+                <p class="text-gray-600">Total: KSh <span id="cart-total">{{ cart_total }}</span></p>
+                <a href="{% url 'marketplace:cart' %}" class="inline-block mt-4 bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                    View Cart
+                </a>
             {% else %}
-                <p>Your cart is empty.</p>
+                <p class="text-gray-500">Your cart is empty.</p>
+                <a href="{% url 'marketplace:home' %}" class="text-blue-600 hover:underline">Start Shopping</a>
             {% endif %}
-        {% endwith %}
-    {% endif %}
+        </div>
+    </div>
+
+    <!-- JavaScript for Adding to Cart -->
+    <script>
+        function addToCart(productId) {
+            const button = event.currentTarget;
+            const text = button.querySelector('.add-to-cart-text');
+            const spinner = button.querySelector('.spinner');
+            text.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            button.disabled = true;
+
+            fetch(`/cart/add/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ quantity: 1 }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                text.classList.remove('hidden');
+                spinner.classList.add('hidden');
+                button.disabled = false;
+                if (data.success) {
+                    document.getElementById('cart-count').innerText = data.cart_count;
+                    document.getElementById('cart-total').innerText = data.cart_total;
+                    alert('Product added to cart!');
+                } else {
+                    alert('Error adding product to cart.');
+                }
+            })
+            .catch(error => {
+                text.classList.remove('hidden');
+                spinner.classList.add('hidden');
+                button.disabled = false;
+                console.error('Error:', error);
+                alert('Error adding product to cart.');
+            });
+        }
+    </script>
 {% endblock %}

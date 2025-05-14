@@ -1,0 +1,25 @@
+{
+  "name": "ecommerce_project",
+  "version": "1.0.0",
+  "description": "Welcome to **Victoria Marketplace** 🌟, an e-commerce platform designed to empower small and medium enterprises (SMEs) and fishers in Kisumu, Kenya. This platform connects local sellers with buyers, offering a seamless online shopping experience with features tailored for the community. Built with Django, it’s robust, scalable, and ready to grow! 🚀",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "npx tailwindcss -i static/css/tailwind.css -o static/css/output.css --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KevinJr20/victoria-marketplace.git"
+  },
+  "keywords": [],
+  "author": "Kevin Omondi Jr.",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/KevinJr20/victoria-marketplace/issues"
+  },
+  "homepage": "https://github.com/KevinJr20/victoria-marketplace#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.3"
+  }
+}

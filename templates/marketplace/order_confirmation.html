@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-semibold text-gray-800 mb-6">Order Confirmation</h1>
+        <div class="bg-white rounded-lg shadow-md p-6 transform transition-all duration-300 hover:shadow-xl">
+            <h2 class="text-2xl font-semibold text-gray-800">Thank You for Your Order!</h2>
+            <p class="text-gray-600 mt-2">Order ID: {{ order.id }}</p>
+            <p class="text-gray-600">Total: KSh {{ order.total_price }}</p>
+            <p class="text-gray-600">Placed on: {{ order.created_at }}</p>
+            <a href="{% url 'marketplace:home' %}" class="mt-4 inline-block bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                Continue Shopping
+            </a>
+        </div>
+    </div>
+{% endblock %}

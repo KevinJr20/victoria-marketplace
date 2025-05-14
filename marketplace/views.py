@@ -1,33 +1,31 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product, CartItem, Order, Category
+from .models import Product, CartItem, Cart, Order, Category
 from python_daraja import payment
 from django.conf import settings
 from django.shortcuts import render, redirect
 from django.db.models import Q
-from .models import Product, CartItem
 from .forms import CustomUserCreationForm, UpdateProfileForm, UpdatePasswordForm, ProductForm
 
 def home(request):
-    query = request.GET.get('q', '')
-    category_id = request.GET.get('category', '')
-    price_min = request.GET.get('price_min', '')
-    price_max = request.GET.get('price_max', '')
-    
     products = Product.objects.all()
-    if query:
-        products = products.filter(Q(name__icontains=query) | Q(description__icontains=query))
-    if category_id:
-        products = products.filter(category__id=category_id)
-    if price_min and price_max:
-        products = products.filter(price__gte=price_min, price__lte=price_max)
-    
     categories = Category.objects.all()
+    cart_items = []
+    cart_total = 0
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(user=request.user).first()
+        if cart:
+            cart_items = CartItem.objects.filter(cart=cart)
+            cart_total = sum(item.product.price * item.quantity for item in cart_items)
     return render(request, 'marketplace/home.html', {
         'products': products,
+        'cart_items': cart_items,
+        'cart_total': cart_total,
         'categories': categories,
-        'query': query,
     })
 
 def product_detail(request, product_id):
@@ -86,14 +84,20 @@ def cart(request):
         return render(request, 'marketplace/cart.html', {'cart_items': cart_items})
     return redirect('marketplace:login')
 
+@login_required
+@csrf_exempt
 def add_to_cart(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
-    if request.user.is_authenticated:
-        CartItem.objects.update_or_create(
-            user=request.user, product=product,
-            defaults={'quantity': 1}
-        )
-    return redirect('marketplace:home')
+    if request.method == 'POST':
+        product = Product.objects.get(id=product_id)
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
+        cart_count = CartItem.objects.filter(cart=cart).count()
+        cart_total = sum(item.product.price * item.quantity for item in CartItem.objects.filter(cart=cart))
+        return JsonResponse({'success': True, 'cart_count': cart_count, 'cart_total': cart_total})
+    return JsonResponse({'success': False})
 
 def initiate_payment(request, cart_item_id):
     if request.user.is_authenticated:
@@ -182,3 +186,111 @@ def order_history(request):
         orders = Order.objects.filter(user=request.user).order_by('-created_at')
         return render(request, 'marketplace/order_history.html', {'orders': orders})
     return redirect('marketplace:login')
+
+def search_products(request):
+    query = request.GET.get('q', '')
+    category_id = request.GET.get('category', '')
+    min_price = request.GET.get('min_price', '')
+    max_price = request.GET.get('max_price', '')
+
+    products = Product.objects.all()
+
+    if query:
+        products = products.filter(name__icontains=query)
+    if category_id:
+        products = products.filter(category_id=category_id)
+    if min_price:
+        products = products.filter(price__gte=min_price)
+    if max_price:
+        products = products.filter(price__lte=max_price)
+
+    categories = Category.objects.all()
+    cart_items = []
+    cart_total = 0
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(user=request.user).first()
+        if cart:
+            cart_items = CartItem.objects.filter(cart=cart)
+            cart_total = sum(item.product.price * item.quantity for item in cart_items)
+
+    return render(request, 'marketplace/home.html', {
+        'products': products,
+        'cart_items': cart_items,
+        'cart_total': cart_total,
+        'categories': categories
+    })
+    
+@login_required
+def cart(request):
+    cart = Cart.objects.filter(user=request.user).first()
+    cart_items = CartItem.objects.filter(cart=cart) if cart else []
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        item_id = request.POST.get('item_id')
+
+        try:
+            cart_item = CartItem.objects.get(id=item_id, cart=cart)
+            if action == 'update':
+                quantity = int(request.POST.get('quantity', 1))
+                if quantity > 0:
+                    cart_item.quantity = quantity
+                    cart_item.save()
+                else:
+                    cart_item.delete()
+            elif action == 'delete':
+                cart_item.delete()
+        except CartItem.DoesNotExist:
+            pass
+
+        return redirect('marketplace:cart')
+
+    cart_items_with_subtotal = [
+        {'item': item, 'subtotal': item.product.price * item.quantity}
+        for item in cart_items
+    ]
+    cart_total = sum(item['subtotal'] for item in cart_items_with_subtotal) if cart_items else 0
+    return render(request, 'marketplace/cart.html', {
+        'cart_items_with_subtotal': cart_items_with_subtotal,
+        'cart_total': cart_total,
+    })
+    
+@login_required
+def checkout(request):
+    cart = Cart.objects.filter(user=request.user).first()
+    if not cart or not CartItem.objects.filter(cart=cart).exists():
+        return redirect('marketplace:cart')
+
+    cart_items = CartItem.objects.filter(cart=cart)
+    cart_items_with_subtotal = [
+        {'item': item, 'subtotal': item.product.price * item.quantity}
+        for item in cart_items
+    ]
+    cart_total = sum(item['subtotal'] for item in cart_items_with_subtotal)
+
+    if request.method == 'POST':
+        order = Order.objects.create(
+            user=request.user,
+            total_price=cart_total
+        )
+        cart_items.delete()
+        return redirect('marketplace:order_confirmation', order_id=order.id)
+
+    return render(request, 'marketplace/checkout.html', {
+        'cart_items_with_subtotal': cart_items_with_subtotal,
+        'cart_total': cart_total,
+    })
+    
+@login_required
+def order_confirmation(request, order_id):
+    order = Order.objects.get(id=order_id, user=request.user)
+    return render(request, 'marketplace/order_confirmation.html', {
+        'order': order,
+    })
+    
+@login_required
+def order_history(request):
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'marketplace/order_history.html', {
+        'orders': orders,
+    })
