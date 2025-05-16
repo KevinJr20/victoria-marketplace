@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-semibold text-gray-800 mb-6">Payment Pending</h1>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <p class="text-gray-600">Please check your phone to complete the M-Pesa payment for Order ID: {{ order.id }}</p>
+            <p class="text-gray-600">Total: KSh {{ order.total_price }}</p>
+            <p class="text-gray-600">You will be redirected to the confirmation page once the payment is confirmed.</p>
+        </div>
+    </div>
+{% endblock %}

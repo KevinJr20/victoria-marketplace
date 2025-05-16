@@ -2,72 +2,129 @@
 
 {% block content %}
     <div class="container mx-auto px-4 py-8">
+        <!-- Hero Banner -->
+        <div class="theme-container rounded-lg shadow-md mb-8 overflow-hidden relative">
+            <div class="h-64 bg-gradient-to-r from-blue-600 to-green-600 flex items-center justify-center text-white text-center p-6">
+                <div>
+                    <h1 class="text-4xl font-bold">Fresh from Kisumu to You!</h1>
+                    <p class="text-xl mt-2">Discover the best local products with ease.</p>
+                    <a href="#products" class="mt-4 inline-block theme-button py-2 px-6 rounded-lg transition-colors duration-300">Shop Now</a>
+                </div>
+            </div>
+        </div>
+
         <!-- Search Form -->
-        <div class="bg-white rounded-lg shadow-md p-4 mb-8">
+        <div class="theme-container rounded-lg shadow-md p-4 mb-8">
             <form method="get" action="{% url 'marketplace:search_products' %}" class="flex flex-col sm:flex-row gap-4">
-                <input type="text" name="q" placeholder="Search products..." class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1">
-                <select name="category" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" name="q" id="search-input" placeholder="Search products..." class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-green-500 flex-1">
+                <select name="category" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-green-500">
                     <option value="">All Categories</option>
                     {% for category in categories %}
                         <option value="{{ category.id }}">{{ category.name }}</option>
                     {% endfor %}
                 </select>
-                <input type="number" name="min_price" placeholder="Min Price" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-32" min="0">
-                <input type="number" name="max_price" placeholder="Max Price" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-32" min="0">
-                <button type="submit" class="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors duration-300">Search</button>
+                <input type="number" name="min_price" placeholder="Min Price" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-green-500 w-32" min="0">
+                <input type="number" name="max_price" placeholder="Max Price" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-green-500 w-32" min="0">
+                <button type="submit" class="theme-button p-3 rounded-lg transition-colors duration-300">
+                    <i class="fas fa-search"></i>
+                </button>
             </form>
         </div>
 
         <!-- Product Grid -->
-        {% if products %}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div id="products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% if products %}
                 {% for product in products %}
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
-                        {% if product.image %}
-                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-56 object-cover">
-                        {% else %}
-                            <div class="w-full h-56 bg-gray-200 flex items-center justify-center">
-                                <span class="text-gray-500">No Image</span>
-                            </div>
-                        {% endif %}
+                    <div class="theme-container rounded-lg shadow-md overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                        <div class="relative overflow-hidden">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-56 object-cover transform transition-transform duration-300 hover:scale-110">
+                            {% else %}
+                                <div class="w-full h-56 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                    <span class="text-gray-500 dark:text-gray-400">No Image</span>
+                                </div>
+                            {% endif %}
+                        </div>
                         <div class="p-4">
-                            <h2 class="text-lg font-semibold text-gray-800">{{ product.name }}</h2>
-                            <p class="text-gray-600">KSh {{ product.price }}</p>
-                            <button onclick="addToCart({{ product.id }})" class="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center">
+                            <h2 class="text-lg font-semibold">{{ product.name }}</h2>
+                            <div class="flex items-center mt-1">
+                                {% for i in "xxxxx"|make_list %}
+                                    {% if forloop.counter0|add:1 <= product.rating|floatformat:0 %}
+                                        <i class="fas fa-star text-yellow-400"></i>
+                                    {% elif product.rating|floatformat:0 < forloop.counter0|add:1 and product.rating|floatformat:1 > forloop.counter0 %}
+                                        <i class="fas fa-star-half-alt text-yellow-400"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-gray-300 dark:text-gray-600"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">{{ product.rating }}/5</span>
+                            </div>
+                            <p>KSh {{ product.price }}</p>
+                            <p class="text-sm mt-2" id="desc-{{ product.id }}">
+                                {% if product.description|length > 100 %}
+                                    {{ product.description|truncatechars:100 }} <a href="#" class="read-more theme-link" data-product-id="{{ product.id }}">read more...</a>
+                                    <span class="hidden full-desc">{{ product.description }}</span>
+                                {% else %}
+                                    {{ product.description }}
+                                {% endif %}
+                            </p>
+                            <button onclick="addToCart({{ product.id }})" class="mt-3 w-full theme-button py-2 rounded-lg transition-colors duration-300 flex items-center justify-center">
                                 <span class="add-to-cart-text">Add to Cart</span>
                                 <svg class="spinner hidden w-5 h-5 ml-2 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                 </svg>
                             </button>
+                            {% if user.is_authenticated %}
+                                <div class="mt-4">
+                                    <h3 class="text-sm font-semibold">Leave a Review</h3>
+                                    <form id="review-form-{{ product.id }}" class="mt-2" method="post" action="{% url 'marketplace:add_review' product.id %}">
+                                        {% csrf_token %}
+                                        <input type="number" name="rating" min="0" max="5" step="0.1" placeholder="Rating (0-5)" class="p-2 border rounded-lg w-full mb-2" required>
+                                        <textarea name="comment" placeholder="Your review..." class="p-2 border rounded-lg w-full mb-2" rows="2"></textarea>
+                                        <button type="submit" class="theme-button py-1 px-3 rounded-lg transition-colors duration-300">Submit</button>
+                                    </form>
+                                    <div id="review-message-{{ product.id }}" class="text-sm mt-2"></div>
+                                    <h4 class="text-sm font-semibold mt-4">Reviews</h4>
+                                    {% for review in product.reviews.all %}
+                                        <div class="mt-2">
+                                            <p><strong>{{ review.user.username }}</strong> - {{ review.rating }}/5</p>
+                                            <p class="text-sm">{{ review.comment }}</p>
+                                            <small>{{ review.created_at|date:"F d, Y H:i" }}</small>
+                                        </div>
+                                    {% empty %}
+                                        <p class="text-sm">No reviews yet.</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 {% endfor %}
-            </div>
-        {% else %}
-            <div class="text-center py-10">
-                <p class="text-gray-500 text-lg">Oops! No products available at the moment.</p>
-                <a href="{% url 'marketplace:seller_dashboard' %}" class="text-blue-600 hover:underline">Are you a seller? Add products now!</a>
-            </div>
-        {% endif %}
+            {% else %}
+                <div class="text-center py-10">
+                    <p class="text-lg">Oops! No products available at the moment.</p>
+                    <a href="{% url 'marketplace:seller_dashboard' %}" class="theme-link">Are you a seller? Add products now!</a>
+                </div>
+            {% endif %}
+        </div>
 
         <!-- Cart Summary -->
-        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Cart Summary</h2>
+        <div class="mt-8 theme-container rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Cart Summary</h2>
             {% if cart_items %}
-                <p class="text-gray-600">Items: <span id="cart-count">{{ cart_items.count }}</span></p>
-                <p class="text-gray-600">Total: KSh <span id="cart-total">{{ cart_total }}</span></p>
-                <a href="{% url 'marketplace:cart' %}" class="inline-block mt-4 bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                <p>Items: <span id="cart-count">{{ cart_items.count }}</span></p>
+                <p>Total: KSh <span id="cart-total">{{ cart_total }}</span></p>
+                <a href="{% url 'marketplace:cart' %}" class="inline-block mt-4 theme-button py-2 px-6 rounded-lg transition-colors duration-300">
                     View Cart
                 </a>
             {% else %}
-                <p class="text-gray-500">Your cart is empty.</p>
-                <a href="{% url 'marketplace:home' %}" class="text-blue-600 hover:underline">Start Shopping</a>
+                <p>Your cart is empty.</p>
+                <a href="{% url 'marketplace:home' %}" class="theme-link">Start Shopping</a>
             {% endif %}
         </div>
     </div>
 
-    <!-- JavaScript for Adding to Cart -->
+    <!-- JavaScript for Adding to Cart, Read More, and Reviews -->
     <script>
         function addToCart(productId) {
             const button = event.currentTarget;
@@ -106,5 +163,90 @@
                 alert('Error adding product to cart.');
             });
         }
+
+        // Read More functionality
+        document.querySelectorAll('.read-more').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const productId = link.getAttribute('data-product-id');
+                const desc = document.getElementById(`desc-${productId}`);
+                const fullDesc = desc.querySelector('.full-desc');
+                if (link.textContent === 'read more...') {
+                    desc.innerHTML = `${fullDesc.textContent} <a href="#" class="read-more theme-link" data-product-id="${productId}">read less</a>`;
+                } else {
+                    desc.innerHTML = `${fullDesc.textContent|truncatechars:100} <a href="#" class="read-more theme-link" data-product-id="${productId}">read more...</a> <span class="hidden full-desc">${fullDesc.textContent}</span>`;
+                }
+            });
+        });
+
+        // Review submission
+        document.querySelectorAll('form[id^="review-form-"]').forEach(form => {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const productId = form.id.split('-')[2];
+                const formData = new FormData(form);
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const messageDiv = document.getElementById(`review-message-${productId}`);
+                    if (data.success) {
+                        messageDiv.textContent = data.message;
+                        messageDiv.style.color = 'green';
+                        setTimeout(() => messageDiv.textContent = '', 3000);
+                        form.reset();
+                        location.reload();
+                    } else {
+                        messageDiv.textContent = data.message;
+                        messageDiv.style.color = 'red';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+
+        // Autocomplete search
+        const searchInput = document.getElementById('search-input');
+        const autocompleteDropdown = document.createElement('div');
+        autocompleteDropdown.className = 'absolute z-10 w-full bg-white dark:bg-gray-800 border rounded-lg mt-1 max-h-40 overflow-y-auto';
+        searchInput.parentNode.appendChild(autocompleteDropdown);
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value;
+            autocompleteDropdown.innerHTML = '';
+            if (query.length > 2) {
+                fetch(`/search-autocomplete/?q=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.suggestions.forEach(suggestion => {
+                            const div = document.createElement('div');
+                            div.className = 'p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer';
+                            div.textContent = suggestion;
+                            div.addEventListener('click', () => {
+                                searchInput.value = suggestion;
+                                autocompleteDropdown.classList.add('hidden');
+                                window.location.href = `{% url 'marketplace:search_products' %}?q=${suggestion}`;
+                            });
+                            autocompleteDropdown.appendChild(div);
+                        });
+                        if (data.suggestions.length > 0) {
+                            autocompleteDropdown.classList.remove('hidden');
+                        } else {
+                            autocompleteDropdown.classList.add('hidden');
+                        }
+                    });
+            } else {
+                autocompleteDropdown.classList.add('hidden');
+            }
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+                autocompleteDropdown.classList.add('hidden');
+            }
+        });
     </script>
 {% endblock %}
