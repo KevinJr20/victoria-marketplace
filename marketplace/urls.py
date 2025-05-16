@@ -23,4 +23,9 @@ urlpatterns = [
     path('search/', views.search_products, name='search_products'),
     path('checkout/', views.checkout, name='checkout'),
     path('order-confirmation/<int:order_id>/', views.order_confirmation, name='order_confirmation'),
+    path('mpesa/callback/', views.mpesa_callback, name='mpesa_callback'),
+    path('initiate-payment/', views.initiate_payment, name='initiate_payment'),
+    path('add-review/<int:product_id>/', views.add_review, name='add_review'),
+    path('search-autocomplete/', views.search_autocomplete, name='search_autocomplete'),
+    path('set-theme/', views.set_theme, name='set_theme'),
 ]

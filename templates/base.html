@@ -1,66 +1,164 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Victoria Marketplace</title>
+    <title>Victoria Marketplace {% block title %}{% endblock %}</title>
     {% load static %}
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link href="{% static 'css/output.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
+        /* Default light theme */
+        [data-theme="light"] {
+            --bg-color: #ffffff;
+            --text-color: #1f2937;
+            --card-bg: #ffffff;
+            --button-bg: #3b82f6;
+            --button-hover: #2563eb;
+            --nav-bg: #ffffff;
+            --nav-text: #1f2937;
+            --link-hover: #3b82f6;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1f2937;
+            --text-color: #f9fafb;
+            --card-bg: #2d3748;
+            --button-bg: #10b981;
+            --button-hover: #059669;
+            --nav-bg: #2d3748;
+            --nav-text: #f9fafb;
+            --link-hover: #10b981;
+        }
+
         body {
-            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
         }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
+
+        /* Ensure navigation inherits theme */
+        nav {
+            background-color: var(--nav-bg);
+            color: var(--nav-text);
         }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
+
+        nav a {
+            color: var(--nav-text);
+            transition: color 0.3s ease;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #4a90e2;
-            border-radius: 4px;
+
+        nav a:hover {
+            color: var(--link-hover);
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3b82f6;
+
+        /* Product cards and other containers */
+        .theme-container {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        /* Buttons */
+        .theme-button {
+            background-color: var(--button-bg);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .theme-button:hover {
+            background-color: var(--button-hover);
+        }
+
+        /* Links */
+        .theme-link {
+            color: var(--button-bg);
+            transition: color 0.3s ease;
+        }
+
+        .theme-link:hover {
+            color: var(--button-hover);
         }
     </style>
 </head>
-<body class="bg-gray-100">
-    <!-- Header -->
-    <header class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-semibold">
-                <a href="{% url 'marketplace:home' %}">Victoria Marketplace</a>
-            </h1>
-            <nav class="space-x-4">
-                <a href="{% url 'marketplace:home' %}" class="hover:underline">Home</a>
-                <a href="{% url 'marketplace:cart' %}" class="hover:underline">Cart</a>
+<body>
+    <nav class="theme-container shadow-md p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{% url 'marketplace:home' %}" class="text-2xl font-bold theme-link">Victoria Marketplace</a>
+            <div class="space-x-4 flex items-center">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'marketplace:orders' %}" class="hover:underline">Orders</a>
-                    <a href="{% url 'marketplace:logout' %}" class="hover:underline">Logout</a>
+                    <a href="{% url 'marketplace:profile' %}" class="theme-link">Profile</a>
+                    <a href="{% url 'marketplace:cart' %}" class="theme-link">Cart</a>
+                    <a href="{% url 'marketplace:orders' %}" class="theme-link">Orders</a>
+                    {% if user.is_seller %}
+                        <a href="{% url 'marketplace:seller_dashboard' %}" class="theme-link">Seller Dashboard</a>
+                    {% endif %}
+                    <a href="{% url 'marketplace:logout' %}" class="theme-link">Logout</a>
                 {% else %}
-                    <a href="{% url 'marketplace:login' %}" class="hover:underline">Login</a>
-                    <a href="{% url 'marketplace:register' %}" class="hover:underline">Register</a>
+                    <a href="{% url 'marketplace:login' %}" class="theme-link">Login</a>
+                    <a href="{% url 'marketplace:register' %}" class="theme-link">Register</a>
                 {% endif %}
-                <a href="{% url 'marketplace:seller_dashboard' %}" class="hover:underline">Sell</a>
-            </nav>
+                <button id="theme-toggle" class="theme-button p-2 rounded-lg text-white focus:outline-none">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
         </div>
-    </header>
+    </nav>
 
-    <!-- Main Content -->
-    <main class="min-h-screen">
-        {% block content %}
-        {% endblock %}
-    </main>
+    <div class="container mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </div>
 
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-6">
-        <div class="container mx-auto px-4 text-center">
-            <p>© 2025 Victoria Marketplace. All rights reserved.</p>
-            <p class="mt-2">Built for SMEs</p>
-        </div>
-    </footer>
+    <a href="#" id="back-to-top" class="fixed bottom-5 right-5 theme-button p-3 rounded-full hidden transition-colors duration-300">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+
+    <script>
+        // Theme switching with session persistence
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        // Set initial theme from session or default to light
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = '{{ request.session.theme }}' || 'light';
+            html.setAttribute('data-theme', savedTheme);
+            if (savedTheme === 'dark') {
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+        });
+
+        themeToggle.addEventListener('click', () => {
+            console.log('Toggle clicked');
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+            themeToggle.innerHTML = newTheme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            console.log('Current theme:', newTheme);
+
+            // Save theme to session
+            fetch('/set-theme/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ theme: newTheme }),
+            });
+        });
+
+        // Back to Top button
+        const backToTop = document.getElementById('back-to-top');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTop.classList.remove('hidden');
+            } else {
+                backToTop.classList.add('hidden');
+            }
+        });
+        backToTop.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
 </body>
 </html>
