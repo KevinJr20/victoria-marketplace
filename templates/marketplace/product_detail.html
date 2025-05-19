@@ -1,13 +1,156 @@
 {% extends 'base.html' %}
+
 {% block content %}
-    <h2>{{ product.name }}</h2>
-    {% if product.image %}
-        <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-width: 300px;">
-    {% endif %}
-    <p>{{ product.description }}</p>
-    <p>Price: KES {{ product.price }}</p>
-    <p>Category: {% if product.category %}{{ product.category.name }}{% else %}Uncategorized{% endif %}</p>
-    <p>Seller: {{ product.seller.username }}</p>
-    <a href="{% url 'marketplace:add_to_cart' product.id %}">Add to Cart</a>
-    <a href="{% url 'marketplace:home' %}">Back to Home</a>
+    <div class="container mx-auto px-4 py-8">
+        <!-- Product Details -->
+        <div class="theme-container rounded-lg shadow-md p-6 mb-8">
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="md:w-1/2">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-96 object-cover rounded-lg">
+                    {% else %}
+                        <div class="w-full h-96 bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-lg">
+                            <span class="text-gray-500 dark:text-gray-400">No Image</span>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="md:w-1/2">
+                    <h1 class="text-3xl font-bold">{{ product.name }}</h1>
+                    <div class="flex items-center mt-2">
+                        {% for i in "xxxxx"|make_list %}
+                            {% if forloop.counter0|add:1 <= product.rating|floatformat:0 %}
+                                <i class="fas fa-star text-yellow-400"></i>
+                            {% elif product.rating|floatformat:0 < forloop.counter0|add:1 and product.rating|floatformat:1 > forloop.counter0 %}
+                                <i class="fas fa-star-half-alt text-yellow-400"></i>
+                            {% else %}
+                                <i class="far fa-star text-gray-300 dark:text-gray-600"></i>
+                            {% endif %}
+                        {% endfor %}
+                        <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">{{ product.rating }}/5</span>
+                    </div>
+                    <p class="text-2xl font-semibold mt-4">KSh {{ product.price }}</p>
+                    <p class="mt-4">{{ product.description }}</p>
+                    <button onclick="addToCart({{ product.id }})" class="mt-6 w-full theme-button py-2 rounded-lg transition-colors duration-300 flex items-center justify-center">
+                        <span class="add-to-cart-text">Add to Cart</span>
+                        <svg class="spinner hidden w-5 h-5 ml-2 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="theme-container rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-semibold mb-4">Customer Reviews</h2>
+            {% if user.is_authenticated %}
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold">Leave a Review</h3>
+                    <form id="review-form-{{ product.id }}" class="mt-2" method="post" action="{% url 'marketplace:add_review' product.id %}">
+                        {% csrf_token %}
+                        <input type="number" name="rating" min="0" max="5" step="0.1" placeholder="Rating (0-5)" class="p-2 border rounded-lg w-full mb-2" required>
+                        <textarea name="comment" placeholder="Your review..." class="p-2 border rounded-lg w-full mb-2" rows="3"></textarea>
+                        <button type="submit" class="theme-button py-1 px-3 rounded-lg transition-colors duration-300">Submit</button>
+                    </form>
+                    <div id="review-message-{{ product.id }}" class="text-sm mt-2"></div>
+                </div>
+            {% endif %}
+            {% if reviews %}
+                {% for review in reviews %}
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                        <p><strong>{{ review.user.username }}</strong> - {{ review.rating }}/5</p>
+                        <p class="text-sm">{{ review.comment }}</p>
+                        <small class="text-gray-500 dark:text-gray-400">{{ review.created_at|date:"F d, Y H:i" }}</small>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-sm">No reviews yet. Be the first to leave one!</p>
+            {% endif %}
+        </div>
+
+        <!-- Cart Summary -->
+        <div class="mt-8 theme-container rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Cart Summary</h2>
+            {% if cart_items %}
+                <p>Items: <span id="cart-count">{{ cart_items.count }}</span></p>
+                <p>Total: KSh <span id="cart-total">{{ cart_total }}</span></p>
+                <a href="{% url 'marketplace:cart' %}" class="inline-block mt-4 theme-button py-2 px-6 rounded-lg transition-colors duration-300">
+                    View Cart
+                </a>
+            {% else %}
+                <p>Your cart is empty.</p>
+                <a href="{% url 'marketplace:home' %}" class="theme-link">Start Shopping</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- JavaScript for Adding to Cart and Review Submission -->
+    <script>
+        function addToCart(productId) {
+            const button = event.currentTarget;
+            const text = button.querySelector('.add-to-cart-text');
+            const spinner = button.querySelector('.spinner');
+            text.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            button.disabled = true;
+
+            fetch(`/cart/add/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ quantity: 1 }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                text.classList.remove('hidden');
+                spinner.classList.add('hidden');
+                button.disabled = false;
+                if (data.success) {
+                    document.getElementById('cart-count').innerText = data.cart_count;
+                    document.getElementById('cart-total').innerText = data.cart_total;
+                    alert('Product added to cart!');
+                } else {
+                    alert('Error adding product to cart.');
+                }
+            })
+            .catch(error => {
+                text.classList.remove('hidden');
+                spinner.classList.add('hidden');
+                button.disabled = false;
+                console.error('Error:', error);
+                alert('Error adding product to cart.');
+            });
+        }
+
+        // Review submission
+        document.querySelectorAll('form[id^="review-form-"]').forEach(form => {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const productId = form.id.split('-')[2];
+                const formData = new FormData(form);
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const messageDiv = document.getElementById(`review-message-${productId}`);
+                    if (data.success) {
+                        messageDiv.textContent = data.message;
+                        messageDiv.style.color = 'green';
+                        setTimeout(() => messageDiv.textContent = '', 3000);
+                        form.reset();
+                        location.reload();
+                    } else {
+                        messageDiv.textContent = data.message;
+                        messageDiv.style.color = 'red';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    </script>
 {% endblock %}

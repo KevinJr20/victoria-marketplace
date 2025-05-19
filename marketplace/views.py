@@ -39,7 +39,20 @@ def home(request):
 
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    return render(request, 'marketplace/product_detail.html', {'product': product})
+    reviews = product.reviews.all()
+    cart_items = []
+    cart_total = 0
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(user=request.user).first()
+        if cart:
+            cart_items = CartItem.objects.filter(cart=cart)
+            cart_total = sum(item.product.price * item.quantity for item in cart_items)
+    return render(request, 'marketplace/product_detail.html', {
+        'product': product,
+        'reviews': reviews,
+        'cart_items': cart_items,
+        'cart_total': cart_total,
+    })
 
 def register(request):
     if request.method == 'POST':
@@ -66,8 +79,14 @@ def logout_view(request):
     logout(request)
     return redirect('marketplace:home')
 
+@login_required
 def profile(request):
-    return render(request, 'marketplace/profile.html', {'user': request.user})
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    reviews = Review.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'marketplace/profile.html', {
+        'orders': orders,
+        'reviews': reviews,
+    })
 
 def update_profile(request):
     if request.method == 'POST':
