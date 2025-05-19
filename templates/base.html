@@ -8,8 +8,7 @@
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
-        /* Default light theme */
-        [data-theme="light"] {
+        :root {
             --bg-color: #ffffff;
             --text-color: #1f2937;
             --card-bg: #ffffff;
@@ -18,6 +17,9 @@
             --nav-bg: #ffffff;
             --nav-text: #1f2937;
             --link-hover: #3b82f6;
+            --border-color: #e5e7eb;
+            --placeholder-bg: #e5e7eb;
+            --placeholder-text: #6b7280;
         }
 
         [data-theme="dark"] {
@@ -29,22 +31,35 @@
             --nav-bg: #2d3748;
             --nav-text: #f9fafb;
             --link-hover: #10b981;
+            --border-color: #4a5568;
+            --placeholder-bg: #4b5563;
+            --placeholder-text: #9ca3af;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            transition: all 0.3s ease;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
         }
 
-        /* Ensure navigation inherits theme */
+        .theme-container {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
         nav {
             background-color: var(--nav-bg);
             color: var(--nav-text);
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         nav a {
             color: var(--nav-text);
+            text-decoration: none;
             transition: color 0.3s ease;
         }
 
@@ -52,36 +67,64 @@
             color: var(--link-hover);
         }
 
-        /* Product cards and other containers */
-        .theme-container {
-            background-color: var(--card-bg);
-            color: var(--text-color);
-            transition: all 0.3s ease;
-        }
-
-        /* Buttons */
         .theme-button {
             background-color: var(--button-bg);
             color: white;
-            transition: all 0.3s ease;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
         }
 
         .theme-button:hover {
             background-color: var(--button-hover);
         }
 
-        /* Links */
         .theme-link {
             color: var(--button-bg);
+            text-decoration: underline;
             transition: color 0.3s ease;
         }
 
         .theme-link:hover {
             color: var(--button-hover);
         }
+
+        input, textarea, select {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--button-bg);
+            box-shadow: 0 0 0 2px rgba(var(--button-bg-rgb), 0.2);
+        }
+
+        #back-to-top {
+            background-color: var(--button-bg);
+            transition: background-color 0.3s ease;
+        }
+
+        #back-to-top:hover {
+            background-color: var(--button-hover);
+        }
+
+        /* Placeholder styles for "No Image" divs */
+        .placeholder-container {
+            background-color: var(--placeholder-bg);
+            color: var(--placeholder-text);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
     </style>
 </head>
 <body>
+    {% csrf_token %}
     <nav class="theme-container shadow-md p-4">
         <div class="container mx-auto flex justify-between items-center">
             <a href="{% url 'marketplace:home' %}" class="text-2xl font-bold theme-link">Victoria Marketplace</a>
@@ -114,39 +157,52 @@
     </a>
 
     <script>
-        // Theme switching with session persistence
         const themeToggle = document.getElementById('theme-toggle');
         const html = document.documentElement;
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
 
-        // Set initial theme from session or default to light
         document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = '{{ request.session.theme }}' || 'light';
+            const savedTheme = '{{ request.session.theme|default:"light" }}';
             html.setAttribute('data-theme', savedTheme);
-            if (savedTheme === 'dark') {
-                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            }
+            updateThemeIcon(savedTheme);
+            applyTheme(savedTheme);
         });
+
+        function updateThemeIcon(theme) {
+            themeToggle.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        }
+
+        function applyTheme(theme) {
+            document.querySelectorAll('.theme-container, input, textarea, select, .placeholder-container').forEach(el => {
+                el.style.transition = 'all 0.3s ease';
+            });
+        }
 
         themeToggle.addEventListener('click', () => {
             console.log('Toggle clicked');
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
             html.setAttribute('data-theme', newTheme);
-            themeToggle.innerHTML = newTheme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            updateThemeIcon(newTheme);
+            applyTheme(newTheme);
             console.log('Current theme:', newTheme);
 
-            // Save theme to session
             fetch('/set-theme/', {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-CSRFToken': csrfToken,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ theme: newTheme }),
-            });
+            }).then(response => response.json()).then(data => {
+                if (data.status === 'success') {
+                    console.log('Theme saved successfully');
+                } else {
+                    console.error('Theme save failed');
+                }
+            }).catch(error => console.error('Theme save failed:', error));
         });
 
-        // Back to Top button
         const backToTop = document.getElementById('back-to-top');
         window.addEventListener('scroll', () => {
             if (window.scrollY > 300) {

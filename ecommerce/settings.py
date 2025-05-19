@@ -54,6 +54,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+SESSION_COOKIE_AGE = 1209600
+
 ROOT_URLCONF = 'ecommerce.urls'
 AUTH_USER_MODEL = 'marketplace.User'
 WSGI_APPLICATION = 'ecommerce.wsgi.application'

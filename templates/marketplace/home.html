@@ -16,15 +16,15 @@
         <!-- Search Form -->
         <div class="theme-container rounded-lg shadow-md p-4 mb-8">
             <form method="get" action="{% url 'marketplace:search_products' %}" class="flex flex-col sm:flex-row gap-4">
-                <input type="text" name="q" id="search-input" placeholder="Search products..." class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-green-500 flex-1">
-                <select name="category" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-green-500">
+                <input type="text" name="q" id="search-input" placeholder="Search products..." class="p-3 border rounded-lg focus:outline-none focus:ring-2 flex-1">
+                <select name="category" class="p-3 border rounded-lg focus:outline-none focus:ring-2">
                     <option value="">All Categories</option>
                     {% for category in categories %}
                         <option value="{{ category.id }}">{{ category.name }}</option>
                     {% endfor %}
                 </select>
-                <input type="number" name="min_price" placeholder="Min Price" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-green-500 w-32" min="0">
-                <input type="number" name="max_price" placeholder="Max Price" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-green-500 w-32" min="0">
+                <input type="number" name="min_price" placeholder="Min Price" class="p-3 border rounded-lg focus:outline-none focus:ring-2 w-32" min="0">
+                <input type="number" name="max_price" placeholder="Max Price" class="p-3 border rounded-lg focus:outline-none focus:ring-2 w-32" min="0">
                 <button type="submit" class="theme-button p-3 rounded-lg transition-colors duration-300">
                     <i class="fas fa-search"></i>
                 </button>
@@ -40,24 +40,24 @@
                             {% if product.image %}
                                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-56 object-cover transform transition-transform duration-300 hover:scale-110">
                             {% else %}
-                                <div class="w-full h-56 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                    <span class="text-gray-500 dark:text-gray-400">No Image</span>
+                                <div class="w-full h-56 placeholder-container flex items-center justify-center">
+                                    <span>No Image</span>
                                 </div>
                             {% endif %}
                         </div>
                         <div class="p-4">
-                            <h2 class="text-lg font-semibold">{{ product.name }}</h2>
+                            <h2 class="text-lg font-semibold">{{ product.name }}</h2>        
                             <div class="flex items-center mt-1">
-                                {% for i in "xxxxx"|make_list %}
-                                    {% if forloop.counter0|add:1 <= product.rating|floatformat:0 %}
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= product.full_stars %}
                                         <i class="fas fa-star text-yellow-400"></i>
-                                    {% elif product.rating|floatformat:0 < forloop.counter0|add:1 and product.rating|floatformat:1 > forloop.counter0 %}
+                                    {% elif forloop.counter == product.full_stars|add:1 and product.has_half_star %}
                                         <i class="fas fa-star-half-alt text-yellow-400"></i>
                                     {% else %}
-                                        <i class="far fa-star text-gray-300 dark:text-gray-600"></i>
+                                        <i class="far fa-star" style="color: var(--placeholder-text);"></i>
                                     {% endif %}
                                 {% endfor %}
-                                <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">{{ product.rating }}/5</span>
+                                <span class="ml-2 text-sm" style="color: var(--placeholder-text);">{{ product.rating_display|floatformat:1 }}/5</span>
                             </div>
                             <p>KSh {{ product.price }}</p>
                             <p class="text-sm mt-2" id="desc-{{ product.id }}">
@@ -86,6 +86,11 @@
             {% endif %}
         </div>
 
+        <!-- Test Star -->
+        <div class="flex items-center mt-2">
+            <i class="fas fa-star text-yellow-400"></i>
+        </div>
+
         <!-- Cart Summary -->
         <div class="mt-8 theme-container rounded-lg shadow-md p-6">
             <h2 class="text-xl font-semibold mb-4">Cart Summary</h2>
@@ -102,7 +107,6 @@
         </div>
     </div>
 
-    <!-- JavaScript for Adding to Cart, Read More, and Autocomplete -->
     <script>
         function addToCart(productId) {
             const button = event.currentTarget;
@@ -142,7 +146,6 @@
             });
         }
 
-        // Read More functionality
         document.querySelectorAll('.read-more').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -157,10 +160,9 @@
             });
         });
 
-        // Autocomplete search
         const searchInput = document.getElementById('search-input');
         const autocompleteDropdown = document.createElement('div');
-        autocompleteDropdown.className = 'absolute z-10 w-full bg-white dark:bg-gray-800 border rounded-lg mt-1 max-h-40 overflow-y-auto';
+        autocompleteDropdown.className = 'absolute z-10 w-full theme-container border rounded-lg mt-1 max-h-40 overflow-y-auto';
         searchInput.parentNode.appendChild(autocompleteDropdown);
 
         searchInput.addEventListener('input', () => {
@@ -192,14 +194,12 @@
             }
         });
 
-        // Hide dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (!searchInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
                 autocompleteDropdown.classList.add('hidden');
             }
         });
 
-        // Prevent "Add to Cart" button from following the product link
         document.querySelectorAll('.theme-container button').forEach(button => {
             button.addEventListener('click', (e) => {
                 e.preventDefault();

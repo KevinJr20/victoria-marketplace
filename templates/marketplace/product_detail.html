@@ -9,24 +9,24 @@
                     {% if product.image %}
                         <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-96 object-cover rounded-lg">
                     {% else %}
-                        <div class="w-full h-96 bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-lg">
-                            <span class="text-gray-500 dark:text-gray-400">No Image</span>
+                        <div class="w-full h-96 placeholder-container flex items-center justify-center rounded-lg">
+                            <span>No Image</span>
                         </div>
                     {% endif %}
                 </div>
                 <div class="md:w-1/2">
                     <h1 class="text-3xl font-bold">{{ product.name }}</h1>
                     <div class="flex items-center mt-2">
-                        {% for i in "xxxxx"|make_list %}
-                            {% if forloop.counter0|add:1 <= product.rating|floatformat:0 %}
+                        {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= full_stars %}
                                 <i class="fas fa-star text-yellow-400"></i>
-                            {% elif product.rating|floatformat:0 < forloop.counter0|add:1 and product.rating|floatformat:1 > forloop.counter0 %}
+                            {% elif forloop.counter == full_stars|add:1 and has_half_star %}
                                 <i class="fas fa-star-half-alt text-yellow-400"></i>
                             {% else %}
-                                <i class="far fa-star text-gray-300 dark:text-gray-600"></i>
+                                <i class="far fa-star" style="color: var(--placeholder-text);"></i>
                             {% endif %}
                         {% endfor %}
-                        <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">{{ product.rating }}/5</span>
+                        <span class="ml-2 text-sm" style="color: var(--placeholder-text);">{{ rating|floatformat:1 }}/5</span>
                     </div>
                     <p class="text-2xl font-semibold mt-4">KSh {{ product.price }}</p>
                     <p class="mt-4">{{ product.description }}</p>
@@ -47,26 +47,42 @@
             {% if user.is_authenticated %}
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold">Leave a Review</h3>
-                    <form id="review-form-{{ product.id }}" class="mt-2" method="post" action="{% url 'marketplace:add_review' product.id %}">
-                        {% csrf_token %}
-                        <input type="number" name="rating" min="0" max="5" step="0.1" placeholder="Rating (0-5)" class="p-2 border rounded-lg w-full mb-2" required>
-                        <textarea name="comment" placeholder="Your review..." class="p-2 border rounded-lg w-full mb-2" rows="3"></textarea>
-                        <button type="submit" class="theme-button py-1 px-3 rounded-lg transition-colors duration-300">Submit</button>
-                    </form>
+                    {% if user_review %}
+                        <form id="review-form-{{ product.id }}" class="mt-2" method="post" action="{% url 'marketplace:add_review' product.id %}">
+                            {% csrf_token %}
+                            <input type="number" name="rating" min="0" max="5" step="0.1" placeholder="Rating (0-5)" value="{{ user_review.rating|default:0 }}" class="p-2 border rounded-lg w-full mb-2" required>
+                            <textarea name="comment" placeholder="Your review..." class="p-2 border rounded-lg w-full mb-2" rows="3">{{ user_review.comment|default:'' }}</textarea>
+                            <input type="hidden" name="review_id" value="{{ user_review.id }}">
+                            <button type="submit" class="theme-button py-1 px-3 rounded-lg transition-colors duration-300">Update Review</button>
+                        </form>
+                    {% else %}
+                        <form id="review-form-{{ product.id }}" class="mt-2" method="post" action="{% url 'marketplace:add_review' product.id %}">
+                            {% csrf_token %}
+                            <input type="number" name="rating" min="0" max="5" step="0.1" placeholder="Rating (0-5)" value="0" class="p-2 border rounded-lg w-full mb-2" required>
+                            <textarea name="comment" placeholder="Your review..." class="p-2 border rounded-lg w-full mb-2" rows="3"></textarea>
+                            <button type="submit" class="theme-button py-1 px-3 rounded-lg transition-colors duration-300">Submit</button>
+                        </form>
+                    {% endif %}
                     <div id="review-message-{{ product.id }}" class="text-sm mt-2"></div>
                 </div>
             {% endif %}
+
             {% if reviews %}
                 {% for review in reviews %}
-                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                    <div class="border-t pt-4 mt-4" style="border-color: var(--border-color);">
                         <p><strong>{{ review.user.username }}</strong> - {{ review.rating }}/5</p>
                         <p class="text-sm">{{ review.comment }}</p>
-                        <small class="text-gray-500 dark:text-gray-400">{{ review.created_at|date:"F d, Y H:i" }}</small>
+                        <small style="color: var(--placeholder-text);">{{ review.created_at|date:"F d, Y H:i" }}</small>
                     </div>
                 {% endfor %}
             {% else %}
                 <p class="text-sm">No reviews yet. Be the first to leave one!</p>
             {% endif %}
+        </div>
+
+        <!-- Test Star -->
+        <div class="flex items-center mt-2">
+            <i class="fas fa-star text-yellow-400"></i>
         </div>
 
         <!-- Cart Summary -->
@@ -85,7 +101,6 @@
         </div>
     </div>
 
-    <!-- JavaScript for Adding to Cart and Review Submission -->
     <script>
         function addToCart(productId) {
             const button = event.currentTarget;
@@ -125,7 +140,6 @@
             });
         }
 
-        // Review submission
         document.querySelectorAll('form[id^="review-form-"]').forEach(form => {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();

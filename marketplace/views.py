@@ -5,13 +5,16 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import models
+from django.http import JsonResponse
 from .models import Product, CartItem, Cart, Order, Category, Review
 from python_daraja import payment
 from django.conf import settings
+from django.db.models import Avg
 from django.shortcuts import render, redirect
 from django.db.models import Q
 from .forms import CustomUserCreationForm, UpdateProfileForm, UpdatePasswordForm, ProductForm
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +28,16 @@ def home(request):
         if cart:
             cart_items = CartItem.objects.filter(cart=cart)
             cart_total = sum(item.product.price * item.quantity for item in cart_items)
-            
-    product_reviews = {p.id: p.reviews.aggregate(avg_rating=models.Avg('rating'))['avg_rating'] or 0.0 for p in products}
+
+    # Calculate average rating for each product and precompute star variables
+    product_reviews = {p.id: p.reviews.aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0.0 for p in products}
     for product in products:
-        product.rating = product_reviews.get(product.id, 0.0)
+        rating = product_reviews.get(product.id, 0.0)
+        product.rating = rating
+        product.full_stars = int(rating)
+        product.has_half_star = (rating - product.full_stars) >= 0.5
+        product.rating_display = rating
+
     return render(request, 'marketplace/home.html', {
         'products': products,
         'cart_items': cart_items,
@@ -39,7 +48,7 @@ def home(request):
 
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    reviews = product.reviews.all()
+    reviews = Review.objects.filter(product=product)
     cart_items = []
     cart_total = 0
     if request.user.is_authenticated:
@@ -47,11 +56,20 @@ def product_detail(request, product_id):
         if cart:
             cart_items = CartItem.objects.filter(cart=cart)
             cart_total = sum(item.product.price * item.quantity for item in cart_items)
+    # Precompute star ratings
+    rating = float(product.rating) if product.rating else 0.0
+    full_stars = int(rating)
+    has_half_star = (rating - full_stars) >= 0.5
+    empty_stars = 5 - full_stars - (1 if has_half_star else 0)
     return render(request, 'marketplace/product_detail.html', {
         'product': product,
         'reviews': reviews,
         'cart_items': cart_items,
         'cart_total': cart_total,
+        'user_review': None if not request.user.is_authenticated else reviews.filter(user=request.user).first(),
+        'full_stars': full_stars,
+        'has_half_star': has_half_star,
+        'rating': rating,
     })
 
 def register(request):
@@ -81,11 +99,28 @@ def logout_view(request):
 
 @login_required
 def profile(request):
-    orders = Order.objects.filter(user=request.user).order_by('-created_at')
-    reviews = Review.objects.filter(user=request.user).order_by('-created_at')
+    orders = Order.objects.filter(user=request.user)
+    reviews = Review.objects.filter(user=request.user)
+    cart_items = []
+    cart_total = 0
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(user=request.user).first()
+        if cart:
+            cart_items = CartItem.objects.filter(cart=cart)
+            cart_total = sum(item.product.price * item.quantity for item in cart_items)
+
+    # Precompute star variables for each review
+    for review in reviews:
+        rating = float(review.rating) if review.rating else 0.0
+        review.full_stars = int(rating)
+        review.has_half_star = (rating - review.full_stars) >= 0.5
+        review.rating_display = rating
+
     return render(request, 'marketplace/profile.html', {
         'orders': orders,
         'reviews': reviews,
+        'cart_items': cart_items,
+        'cart_total': cart_total,
     })
 
 def update_profile(request):
@@ -331,11 +366,12 @@ def search_autocomplete(request):
 @csrf_exempt
 def set_theme(request):
     if request.method == 'POST':
-        data = request.POST if request.POST else request.json
-        theme = data.get('theme', 'light')
-        request.session['theme'] = theme
-        return JsonResponse({'success': True})
-    return JsonResponse({'success': False})
+        data = json.loads(request.body)
+        theme = data.get('theme')
+        if theme in ['light', 'dark']:
+            request.session['theme'] = theme
+            return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'}, status=400)
 
 @login_required
 @csrf_exempt
@@ -344,11 +380,26 @@ def add_review(request, product_id):
         product = Product.objects.get(id=product_id)
         rating = float(request.POST.get('rating', 0.0))
         comment = request.POST.get('comment', '')
+        review_id = request.POST.get('review_id')
         if 0 <= rating <= 5:
-            Review.objects.create(product=product, user=request.user, rating=rating, comment=comment)
+            if review_id:
+                # Update existing review
+                try:
+                    review = Review.objects.get(id=review_id, product=product, user=request.user)
+                    review.rating = rating
+                    review.comment = comment
+                    review.save()
+                    message = 'Review updated!'
+                except Review.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'Review not found'})
+            else:
+                # Create new review
+                review = Review.objects.create(product=product, user=request.user, rating=rating, comment=comment)
+                message = 'Review added!'
             # Update product average rating
             avg_rating = product.reviews.aggregate(models.Avg('rating'))['rating__avg'] or 0.0
             product.rating = avg_rating
             product.save()
-        return JsonResponse({'success': True, 'message': 'Review added!'})
+            return JsonResponse({'success': True, 'message': message})
+        return JsonResponse({'success': False, 'message': 'Invalid rating'})
     return JsonResponse({'success': False, 'message': 'Invalid request'})

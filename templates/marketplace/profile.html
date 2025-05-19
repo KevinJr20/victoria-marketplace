@@ -14,7 +14,7 @@
             {% if orders %}
                 <div class="space-y-4">
                     {% for order in orders %}
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <div class="border-t pt-4" style="border-color: var(--border-color);">
                             <p><strong>Order #{{ order.id }}</strong> - Placed on {{ order.created_at|date:"F d, Y H:i" }}</p>
                             <p>Total: KSh {{ order.total_price }}</p>
                             <a href="{% url 'marketplace:order_confirmation' order.id %}" class="theme-link">View Details</a>
@@ -33,10 +33,22 @@
             {% if reviews %}
                 <div class="space-y-4">
                     {% for review in reviews %}
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                            <p><strong>{{ review.product.name }}</strong> - {{ review.rating }}/5</p>
+                        <div class="border-t pt-4" style="border-color: var(--border-color);">
+                            <p><strong>{{ review.product.name }}</strong></p>
+                            <div class="flex items-center mt-1">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= review.full_stars %}
+                                        <i class="fas fa-star text-yellow-400"></i>
+                                    {% elif forloop.counter == review.full_stars|add:1 and review.has_half_star %}
+                                        <i class="fas fa-star-half-alt text-yellow-400"></i>
+                                    {% else %}
+                                        <i class="far fa-star" style="color: var(--placeholder-text);"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="ml-2 text-sm" style="color: var(--placeholder-text);">{{ review.rating_display|floatformat:1 }}/5</span>
+                            </div>
                             <p class="text-sm">{{ review.comment }}</p>
-                            <small class="text-gray-500 dark:text-gray-400">Posted on {{ review.created_at|date:"F d, Y H:i" }}</small>
+                            <small style="color: var(--placeholder-text);">Posted on {{ review.created_at|date:"F d, Y H:i" }}</small>
                         </div>
                     {% endfor %}
                 </div>
@@ -44,6 +56,11 @@
                 <p>You haven't written any reviews yet.</p>
                 <a href="{% url 'marketplace:home' %}" class="theme-link">Browse Products to Review</a>
             {% endif %}
+        </div>
+
+        <!-- Test Star -->
+        <div class="flex items-center mt-2">
+            <i class="fas fa-star text-yellow-400"></i>
         </div>
     </div>
 {% endblock %}
