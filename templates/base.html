@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Victoria Marketplace {% block title %}{% endblock %}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -83,12 +84,36 @@
 
         .theme-link {
             color: var(--button-bg);
-            text-decoration: underline;
+            text-decoration: none;
             transition: color 0.3s ease;
+            position: relative;
         }
 
         .theme-link:hover {
             color: var(--button-hover);
+        }
+
+        /* Tooltip styles */
+        .theme-link .tooltip-text {
+            visibility: hidden;
+            width: 120px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            top: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .theme-link:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
         }
 
         input, textarea, select {
@@ -115,7 +140,6 @@
             background-color: var(--button-hover);
         }
 
-        /* Placeholder styles for "No Image" divs */
         .placeholder-container {
             background-color: var(--placeholder-bg);
             color: var(--placeholder-text);
@@ -130,16 +154,37 @@
             <a href="{% url 'marketplace:home' %}" class="text-2xl font-bold theme-link">Victoria Marketplace</a>
             <div class="space-x-4 flex items-center">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'marketplace:profile' %}" class="theme-link">Profile</a>
-                    <a href="{% url 'marketplace:cart' %}" class="theme-link">Cart</a>
-                    <a href="{% url 'marketplace:orders' %}" class="theme-link">Orders</a>
+                    <a href="{% url 'marketplace:profile' %}" class="theme-link">
+                        <i class="fas fa-user"></i>
+                        <span class="tooltip-text">Profile</span>
+                    </a>
+                    <a href="{% url 'marketplace:cart' %}" class="theme-link">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="tooltip-text">Cart</span>
+                    </a>
+                    <a href="{% url 'marketplace:orders' %}" class="theme-link">
+                        <i class="fas fa-box"></i>
+                        <span class="tooltip-text">Orders</span>
+                    </a>
                     {% if user.is_seller %}
-                        <a href="{% url 'marketplace:seller_dashboard' %}" class="theme-link">Seller Dashboard</a>
+                        <a href="{% url 'marketplace:seller_dashboard' %}" class="theme-link">
+                            <i class="fas fa-store"></i>
+                            <span class="tooltip-text">Seller Dashboard</span>
+                        </a>
                     {% endif %}
-                    <a href="{% url 'marketplace:logout' %}" class="theme-link">Logout</a>
+                    <a href="{% url 'marketplace:logout' %}" class="theme-link">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="tooltip-text">Logout</span>
+                    </a>
                 {% else %}
-                    <a href="{% url 'marketplace:login' %}" class="theme-link">Login</a>
-                    <a href="{% url 'marketplace:register' %}" class="theme-link">Register</a>
+                    <a href="{% url 'marketplace:login' %}" class="theme-link">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span class="tooltip-text">Login</span>
+                    </a>
+                    <a href="{% url 'marketplace:register' %}" class="theme-link">
+                        <i class="fas fa-user-plus"></i>
+                        <span class="tooltip-text">Register</span>
+                    </a>
                 {% endif %}
                 <button id="theme-toggle" class="theme-button p-2 rounded-lg text-white focus:outline-none">
                     <i class="fas fa-moon"></i>

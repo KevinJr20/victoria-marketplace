@@ -42,8 +42,6 @@ INSTALLED_APPS = [
 ]
 
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -55,6 +53,7 @@ MIDDLEWARE = [
 ]
 
 SESSION_COOKIE_AGE = 1209600
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 ROOT_URLCONF = 'ecommerce.urls'
 AUTH_USER_MODEL = 'marketplace.User'
@@ -82,6 +81,15 @@ MPESA_SHORTCODE = 'your_shortcode'
 MPESA_PASSKEY = 'your_passkey'
 MPESA_CALLBACK_URL = 'https://yourdomain.com/callback'
 
+# Stripe settings
+STRIPE_PUBLIC_KEY = 'your_stripe_public_key'
+STRIPE_SECRET_KEY = 'your_stripe_secret_key'
+
+# PayPal Settings
+PAYPAL_CLIENT_ID = 'your_paypal_client_id'
+PAYPAL_CLIENT_SECRET = 'your_paypal_client_secret'
+PAYPAL_MODE = 'sandbox'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -93,6 +101,7 @@ DATABASES = {
     }
 }
 
+LOGIN_URL = 'marketplace:login'
 
 
 
@@ -131,10 +140,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
-
+TIME_ZONE = 'Africa/Nairobi'
 USE_I18N = True
-
 USE_TZ = True
 
 

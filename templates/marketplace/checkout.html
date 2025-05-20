@@ -1,37 +1,136 @@
 {% extends 'base.html' %}
 
+{% block title %}Checkout{% endblock %}
+
 {% block content %}
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-semibold text-gray-800 mb-6">Checkout</h1>
-        {% if cart_items_with_subtotal %}
-            <div class="space-y-4">
-                {% for entry in cart_items_with_subtotal %}
-                    <div class="bg-white rounded-lg shadow-md p-4 flex flex-col sm:flex-row items-center justify-between gap-4 transform transition-all duration-300 hover:shadow-xl">
-                        <div class="flex-1">
-                            <h2 class="text-lg font-semibold text-gray-800">{{ entry.item.product.name }}</h2>
-                            <p class="text-gray-600">KSh {{ entry.item.product.price }} x {{ entry.item.quantity }}</p>
+        <div class="theme-container rounded-lg shadow-md p-6 max-w-md mx-auto">
+            <h2 class="text-2xl font-semibold mb-4">Checkout</h2>
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="p-2 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                            {{ message }}
                         </div>
-                        <p class="text-gray-800 font-bold">KSh {{ entry.subtotal }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if cart_items_with_subtotal %}
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold">Cart Summary</h3>
+                    <ul class="mt-2">
+                        {% for entry in cart_items_with_subtotal %}
+                            <li>{{ entry.item.product.name }} - Quantity: {{ entry.item.quantity }} - KSh {{ entry.subtotal }}</li>
+                        {% endfor %}
+                    </ul>
+                    <p class="mt-2 font-semibold">Total: KSh {{ cart_total }}</p>
+                </div>
+                <!-- Payment Method Selection -->
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold mb-2">Select Payment Method</h3>
+                    <div class="flex flex-col space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="payment_method" value="mpesa" class="mr-2" checked>
+                            M-Pesa
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="payment_method" value="card" class="mr-2">
+                            Card (Visa, Mastercard, etc.)
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="payment_method" value="paypal" class="mr-2">
+                            PayPal
+                        </label>
                     </div>
-                {% endfor %}
-                <div class="mt-6 bg-white p-4 rounded-lg shadow-md">
-                    <h2 class="text-xl font-semibold text-gray-800">Total: KSh {{ cart_total }}</h2>
-                    <form method="post">
+                </div>
+                <!-- M-Pesa Form -->
+                <div id="mpesa-form" class="payment-form">
+                    <form method="post" action="{% url 'marketplace:initiate_payment' %}">
                         {% csrf_token %}
-                        <button type="submit" class="mt-4 inline-block bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300">
-                            Confirm Order
-                        </button>
-                        <a href="{% url 'marketplace:cart' %}" class="mt-4 inline-block text-blue-600 px-4 py-2 hover:underline">
-                            Back to Cart
-                        </a>
+                        <input type="hidden" name="payment_method" value="mpesa">
+                        <div class="mb-4">
+                            <label for="mpesa_amount" class="block text-sm font-medium mb-1">Amount (KSh)</label>
+                            <input type="number" name="amount" id="mpesa_amount" value="{{ cart_total }}" class="p-2 border rounded-lg w-full" readonly>
+                        </div>
+                        <div class="mb-4">
+                            <label for="phone_number" class="block text-sm font-medium mb-1">Phone Number (e.g., 2547XXXXXXXX)</label>
+                            <input type="text" name="phone_number" id="phone_number" placeholder="2547XXXXXXXX" class="p-2 border rounded-lg w-full" required>
+                        </div>
+                        <button type="submit" class="w-full theme-button py-2 rounded-lg transition-colors duration-300">Pay with M-Pesa</button>
                     </form>
                 </div>
-            </div>
-        {% else %}
-            <div class="text-center py-10">
-                <p class="text-gray-500 text-lg">Your cart is empty.</p>
-                <a href="{% url 'marketplace:home' %}" class="text-blue-600 hover:underline">Start Shopping</a>
-            </div>
-        {% endif %}
+                <!-- Card Form (Stripe) -->
+                <div id="card-form" class="payment-form hidden">
+                    <form id="card-payment-form" method="post" action="{% url 'marketplace:process_card_payment' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="payment_method" value="card">
+                        <div class="mb-4">
+                            <label for="card_amount" class="block text-sm font-medium mb-1">Amount (KSh)</label>
+                            <input type="number" name="amount" id="card_amount" value="{{ cart_total }}" class="p-2 border rounded-lg w-full" readonly>
+                        </div>
+                        <div id="card-element" class="mb-4 p-2 border rounded-lg"></div>
+                        <div id="card-errors" class="text-red-500 text-sm mb-4"></div>
+                        <button type="submit" class="w-full theme-button py-2 rounded-lg transition-colors duration-300">Pay with Card</button>
+                    </form>
+                </div>
+                <!-- PayPal Form -->
+                <div id="paypal-form" class="payment-form hidden">
+                    <form method="post" action="{% url 'marketplace:initiate_paypal_payment' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="payment_method" value="paypal">
+                        <div class="mb-4">
+                            <label for="paypal_amount" class="block text-sm font-medium mb-1">Amount (KSh)</label>
+                            <input type="number" name="amount" id="paypal_amount" value="{{ cart_total }}" class="p-2 border rounded-lg w-full" readonly>
+                        </div>
+                        <button type="submit" class="w-full theme-button py-2 rounded-lg transition-colors duration-300">Pay with PayPal</button>
+                    </form>
+                </div>
+            {% else %}
+                <p>Your cart is empty.</p>
+                <a href="{% url 'marketplace:home' %}" class="theme-link">Start Shopping</a>
+            {% endif %}
+        </div>
     </div>
+    <!-- Stripe JS -->
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+        const forms = document.querySelectorAll('.payment-form');
+        paymentMethods.forEach(method => {
+            method.addEventListener('change', () => {
+                forms.forEach(form => form.classList.add('hidden'));
+                document.getElementById(`${method.value}-form`).classList.remove('hidden');
+            });
+        });
+        const stripe = Stripe('{{ stripe_public_key }}');
+        const elements = stripe.elements();
+        const cardElement = elements.create('card');
+        cardElement.mount('#card-element');
+        const cardForm = document.getElementById('card-payment-form');
+        const cardErrors = document.getElementById('card-errors');
+        cardForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const { paymentIntent, error } = await stripe.createPaymentMethod({
+                type: 'card',
+                card: cardElement,
+            });
+            if (error) {
+                cardErrors.textContent = error.message;
+            } else {
+                cardErrors.textContent = '';
+                const formData = new FormData(cardForm);
+                formData.append('payment_method_id', paymentIntent.id);
+                fetch(cardForm.action, {
+                    method: 'POST',
+                    body: formData,
+                }).then(response => response.json()).then(data => {
+                    if (data.success) {
+                        window.location.href = '{% url "marketplace:payment_success" %}';
+                    } else {
+                        cardErrors.textContent = data.error;
+                    }
+                });
+            }
+        });
+    </script>
 {% endblock %}

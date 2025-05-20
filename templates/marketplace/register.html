@@ -1,9 +1,73 @@
 {% extends 'base.html' %}
+
+{% block title %}Register{% endblock %}
+
 {% block content %}
-    <h2>Register</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Register</button>
-    </form>
+    <div class="container mx-auto px-4 py-8">
+        <div class="theme-container rounded-lg shadow-md p-6 max-w-md mx-auto">
+            <h2 class="text-2xl font-semibold mb-4">Register</h2>
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="p-2 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="mb-4">
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium mb-1">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.id_for_label == 'id_password1' %}
+                            <div id="password-strength" class="text-sm mt-1"></div>
+                        {% endif %}
+                        {% if field.help_text %}
+                            <p class="text-sm text-gray-500">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <p class="text-sm text-red-500">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="w-full theme-button py-2 rounded-lg transition-colors duration-300">Register</button>
+            </form>
+            <p class="mt-4 text-sm">Already have an account? <a href="{% url 'marketplace:login' %}" class="theme-link">Login here</a>.</p>
+        </div>
+    </div>
+
+    <script>
+        const passwordField = document.getElementById('id_password1');
+        const strengthDiv = document.getElementById('password-strength');
+
+        passwordField.addEventListener('input', () => {
+            const password = passwordField.value;
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+            let message = '';
+            let color = '';
+            if (strength === 0) {
+                message = 'Weak';
+                color = 'text-red-500';
+            } else if (strength <= 2) {
+                message = 'Moderate';
+                color = 'text-yellow-500';
+            } else if (strength === 3) {
+                message = 'Strong';
+                color = 'text-green-500';
+            } else {
+                message = 'Very Strong';
+                color = 'text-green-700';
+            }
+
+            strengthDiv.textContent = password ? `Password Strength: ${message}` : '';
+            strengthDiv.className = `text-sm mt-1 ${color}`;
+        });
+    </script>
 {% endblock %}
