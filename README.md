@@ -143,11 +143,11 @@ For questions, suggestions, or collaboration, reach out to:
 
 Kevin Omondi Jr. 📩
 
-Email: kevojr69@gmail.com
+Email: Kevin Omondi Jr.[kevojr69@gmail.com]
 
-GitHub: [KevinJr20]https://github.com/KevinJr20
+GitHub: KevinJr20[https://github.com/KevinJr20]
 
-X: [K3V0JR1]https://x.com/K3V0JR1?s=09
+X: K3V0JR1[https://x.com/K3V0JR1?s=09]
 
 
 Built by `Kevin Omondi Jr.`
