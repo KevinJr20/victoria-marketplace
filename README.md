@@ -10,7 +10,13 @@ Victoria Marketplace is a web-based application that facilitates buying and sell
 
 - **User Authentication** 🔐: Register, login, and manage your profile securely.
 
+- **Product Reviews** ⭐: Allow users to leave reviews and ratings for products.
+
 - **Product Listings** 📦: Browse products with search, filters, and categories.
+
+- **Multiple Payment Options** 💰: Add support for card payments or PayPal.
+
+- **Analytics Dashboard** 📊: Provide insights for sellers on sales and product views.
 
 - **Cart & Orders** 🛍️: Add items to your cart, checkout, and view order history.
 
@@ -24,7 +30,7 @@ Victoria Marketplace is a web-based application that facilitates buying and sell
 
 ## 🛠️ Technologies Used
 
-- **Payments**: M-Pesa via `python-daraja` 💸
+- **Payments**: M-Pesa via `python-daraja` 💸, `PayPal`, and `Card Payment`.
 - **Version Control**: Git & GitHub 🌐
 
 
@@ -102,12 +108,6 @@ Manage users, products, categories, and orders.
 
 **Live Chat Support** 💬: Implement a chat system for buyer-seller communication.
 
-**Product Reviews** ⭐: Allow users to leave reviews and ratings for products.
-
-**Multiple Payment Options** 💰: Add support for card payments or PayPal.
-
-**Analytics Dashboard** 📊: Provide insights for sellers on sales and product views.
-
 
 ## 🤝 Contributing
 
@@ -145,9 +145,11 @@ Kevin Omondi Jr. 📩
 
 Email: kevojr69@gmail.com
 
-GitHub: https://github.com/KevinJr20
+GitHub: [KevinJr20]https://github.com/KevinJr20
 
-X: https://x.com/K3V0JR1?s=09
+X: [K3V0JR1]https://x.com/K3V0JR1?s=09
 
 
-🌟 **Thank you for exploring Victoria Marketplace! Let’s empower Kisumu’s local businesses together!** 🌟
+Built by `Kevin Omondi Jr.`
+
+🌟 **Thank you for exploring Victoria Marketplace! Let’s empower Kisumu’s local businesses together.** 
