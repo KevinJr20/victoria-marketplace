@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.db import models
+from django.db import models, IntegrityError
 from django.http import JsonResponse
 from .models import Product, CartItem, Cart, Order, Category, Review
 from python_daraja import payment
@@ -15,7 +15,10 @@ from django.db.models import Sum, Count, Avg, F, ExpressionWrapper, fields
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib import messages
-from .forms import CustomUserCreationForm, CustomAuthenticationForm
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
+from .models import Profile
+from .forms import CustomUserCreationForm, CustomAuthenticationForm, ProductForm, UserRegistrationForm, UpdateProfileForm, UpdatePasswordForm
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import logging
@@ -83,19 +86,14 @@ def product_detail(request, product_id):
 
 def register(request):
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
+        form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            Profile.objects.create(user=user)  # Create a profile for the new user
+            Profile.objects.create(user=user)
             login(request, user)
-            messages.success(request, 'Registration successful! Welcome to Victoria Marketplace.')
             return redirect('marketplace:home')
-        else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field.capitalize()}: {error}")
     else:
-        form = CustomUserCreationForm()
+        form = UserRegistrationForm()
     return render(request, 'marketplace/register.html', {'form': form})
 
 def user_login(request):
@@ -142,26 +140,52 @@ def profile(request):
         review.has_half_star = (rating - review.full_stars) >= 0.5
         review.rating_display = rating
 
+    # Handle missing Profile
+    try:
+        user_profile = request.user.profile
+    except Profile.DoesNotExist:
+        user_profile = None
+
     return render(request, 'marketplace/profile.html', {
         'orders': orders,
         'reviews': reviews,
         'cart_items': cart_items,
         'cart_total': cart_total,
-        'profile': profile
+        'profile': user_profile, 
+        'user': request.user
     })
 
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
 def update_profile(request):
+    try:
+        profile = request.user.profile
+    except Profile.DoesNotExist:
+        profile = None
+
     if request.method == 'POST':
-        profile_form = UpdateProfileForm(request.POST, instance=request.user)
+        if profile:
+            profile_form = UpdateProfileForm(request.POST, instance=profile)
+        else:
+            profile_form = UpdateProfileForm(request.POST)
         password_form = UpdatePasswordForm(user=request.user, data=request.POST)
-        if profile_form.is_valid():
-            profile_form.save()
-        if password_form.is_valid():
+        if profile_form.is_valid() and password_form.is_valid():
+            profile_instance = profile_form.save(commit=False)
+            if not profile:  # Create Profile if it doesn't exist
+                profile_instance.user = request.user
+            profile_instance.save()
             password_form.save()
-            login(request, request.user)
-        return redirect('marketplace:profile')
+            login(request, request.user)  # Optional, refresh session
+            return redirect('marketplace:profile')
     else:
-        profile_form = UpdateProfileForm(instance=request.user)
+        # If profile exists, pass it as instance; otherwise, initialize form without instance
+        if profile:
+            profile_form = UpdateProfileForm(instance=profile)
+        else:
+            profile_form = UpdateProfileForm()
         password_form = UpdatePasswordForm(user=request.user)
     return render(request, 'marketplace/update_profile.html', {
         'profile_form': profile_form,
@@ -170,7 +194,6 @@ def update_profile(request):
 
 
 @login_required
-@csrf_exempt
 def add_to_cart(request, product_id):
     if request.method == 'POST':
         try:

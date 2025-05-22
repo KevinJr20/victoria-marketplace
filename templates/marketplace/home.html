@@ -7,55 +7,87 @@
             <div class="h-64 bg-gradient-to-r from-blue-600 to-green-600 flex items-center justify-center text-white text-center p-6">
                 <div>
                     <h1 class="text-4xl font-bold">Fresh from Kisumu to You!</h1>
-                    <p class="text-xl mt-2">Discover the best local products with ease.</p>
+                    <h2 class="text-xl mt-2">Shop Next Door—Delivered to Your Door. Trust local. Shop Smart</h2>
                     <a href="#products" class="mt-4 inline-block theme-button py-2 px-6 rounded-lg transition-colors duration-300">Shop Now</a>
                 </div>
             </div>
         </div>
 
         <!-- Search Form -->
-        <div class="theme-container rounded-2xl shadow-xl p-6 mb-8 bg-[var(--card-bg)]">
-            <form method="get" action="{% url 'marketplace:search_products' %}" class="flex flex-col sm:flex-row gap-4 items-center">
-                <!-- Search Input with Icon -->
-                <div class="relative flex-1 w-full">
-                    <input type="text" name="q" id="search-input" placeholder="Search for products..." 
-                           class="w-full pl-6 pr-14 py-4 border-0 rounded-xl 
-                                  bg-gray-100 dark:bg-gray-700 text-[var(--text-color)] 
-                                  focus:outline-none focus:ring-2 focus:ring-[var(--button-bg)] 
-                                  shadow-sm hover:shadow-md transition-all duration-300 
-                                  placeholder-[var(--placeholder-text)] text-lg font-medium" />
-                    <button type="submit" class="absolute right-5 top-1/2 transform -translate-y-1/2 text-[var(--text-color)] hover:text-[var(--button-bg)] focus:outline-none">
-                        <i class="fas fa-search text-xl"></i>
-                    </button>
-                </div>
-                <!-- Category Dropdown -->
-                <select name="category" class="p-4 border-0 rounded-xl 
-                                              bg-gray-100 dark:bg-gray-700 text-[var(--text-color)] 
-                                              focus:outline-none focus:ring-2 focus:ring-[var(--button-bg)] 
-                                              shadow-sm hover:shadow-md transition-all duration-300 text-lg font-medium 
-                                              cursor-pointer sm:w-48">
+<div class="theme-container rounded-2xl shadow-lg p-6 mb-8 bg-[var(--card-bg)] border border-[var(--border-color)] border-opacity-10">
+    <form method="get" action="{% url 'marketplace:search_products' %}" class="flex flex-col sm:flex-row gap-4 items-center relative">
+        <!-- Animated Search Input with External Icon -->
+        <div class="relative flex-1 w-full search-container">
+            <input type="text" name="q" id="search-input" placeholder="Search..." 
+                   class="w-full pl-4 pr-10 py-2 rounded-full 
+                          bg-[var(--card-bg)] text-[var(--text-color)] 
+                          focus:outline-none focus:ring-2 focus:ring-[var(--button-bg)] 
+                          shadow-sm hover:shadow-md transition-all duration-500 
+                          placeholder-[var(--placeholder-text)] text-base font-medium 
+                          border border-[var(--border-color)]" />
+            <button type="submit" class="absolute right-[-10rem] sm:right-[-5rem] top-1/2 transform -translate-y-1/2 text-[var(--text-color)] opacity-60 hover:opacity-100 transition-opacity duration-300">
+                <i class="fas fa-search text-lg"></i>
+            </button>
+        </div>
+        <!-- Category Button -->
+        <div class="relative">
+            <button type="button" id="category-btn" class="p-3 rounded-xl bg-[var(--button-bg)] text-[var(--button-text)] 
+                                                          hover:bg-[var(--button-hover)] transition-all duration-300 
+                                                          shadow-sm hover:shadow-md flex items-center gap-2">
+                <i class="fas fa-list"></i>
+                <span>Category</span>
+            </button>
+            <!-- Category Options (Hidden by Default) -->
+            <div id="category-options" class="absolute top-12 left-0 bg-[var(--card-bg)] border border-[var(--border-color)] 
+                                             rounded-xl shadow-lg p-4 z-10 hidden transform transition-all duration-300 w-[180px]">
+                <label for="category-filter" class="text-[var(--text-color)] text-base font-medium">Category</label>
+                <select name="category" id="category-filter" class="p-2 rounded-xl w-full mt-1
+                                                                 bg-[var(--card-bg)] text-[var(--text-color)] 
+                                                                 focus:outline-none focus:ring-2 focus:ring-[var(--button-bg)] 
+                                                                 shadow-sm hover:shadow-md transition-all duration-300 text-base font-medium 
+                                                                 cursor-pointer border border-[var(--border-color)]">
                     <option value="">All Categories</option>
                     {% for category in categories %}
                         <option value="{{ category.id }}">{{ category.name }}</option>
                     {% endfor %}
                 </select>
-                <!-- Price Inputs -->
-                <div class="flex gap-4 w-full sm:w-auto">
-                    <input type="number" name="min_price" placeholder="Min Price" 
-                           class="p-4 border-0 rounded-xl 
-                                  bg-gray-100 dark:bg-gray-700 text-[var(--text-color)] 
-                                  focus:outline-none focus:ring-2 focus:ring-[var(--button-bg)] 
-                                  shadow-sm hover:shadow-md transition-all duration-300 w-full sm:w-32 
-                                  placeholder-[var(--placeholder-text)] text-lg font-medium" min="0">
-                    <input type="number" name="max_price" placeholder="Max Price" 
-                           class="p-4 border-0 rounded-xl 
-                                  bg-gray-100 dark:bg-gray-700 text-[var(--text-color)] 
-                                  focus:outline-none focus:ring-2 focus:ring-[var(--button-bg)] 
-                                  shadow-sm hover:shadow-md transition-all duration-300 w-full sm:w-32 
-                                  placeholder-[var(--placeholder-text)] text-lg font-medium" min="0">
-                </div>
-            </form>
+            </div>
         </div>
+        <!-- Price Filter Button -->
+        <div class="relative">
+            <button type="button" id="filter-btn" class="p-3 rounded-xl bg-[var(--button-bg)] text-[var(--button-text)] 
+                                                        hover:bg-[var(--button-hover)] transition-all duration-300 
+                                                        shadow-sm hover:shadow-md flex items-center gap-2">
+                <i class="fas fa-filter"></i>
+                <span>Filter Price</span>
+            </button>
+            <!-- Price Filter Options (Hidden by Default) -->
+            <div id="filter-options" class="absolute top-12 left-0 bg-[var(--card-bg)] border border-[var(--border-color)] 
+                                           rounded-xl shadow-lg p-4 z-10 hidden transform transition-all duration-300 w-[240px]">
+                <!-- Price Range Filter -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-[var(--text-color)] text-base font-medium">Price Range</label>
+                    <div class="flex gap-3">
+                        <input type="number" name="min_price" placeholder="Min Price" 
+                               class="p-2 rounded-xl w-full 
+                                      bg-[var(--card-bg)] text-[var(--text-color)] 
+                                      focus:outline-none focus:ring-2 focus:ring-[var(--button-bg)] 
+                                      shadow-sm hover:shadow-md transition-all duration-300 
+                                      placeholder-[var(--placeholder-text)] text-base font-medium 
+                                      border border-[var(--border-color)]" min="0">
+                        <input type="number" name="max_price" placeholder="Max Price" 
+                               class="p-2 rounded-xl w-full 
+                                      bg-[var(--card-bg)] text-[var(--text-color)] 
+                                      focus:outline-none focus:ring-2 focus:ring-[var(--button-bg)] 
+                                      shadow-sm hover:shadow-md transition-all duration-300 
+                                      placeholder-[var(--placeholder-text)] text-base font-medium 
+                                      border border-[var(--border-color)]" min="0">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
 
         <!-- Product Grid -->
         <div id="products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -111,7 +143,6 @@
                 </div>
             {% endif %}
         </div>
-
 
         <!-- Cart Summary -->
         <div class="mt-8 theme-container rounded-lg shadow-md p-6">
@@ -179,53 +210,6 @@
                 } else {
                     desc.innerHTML = `${fullDesc.textContent|truncatechars:100} <a href="#" class="read-more theme-link" data-product-id="${productId}">read more...</a> <span class="hidden full-desc">${fullDesc.textContent}</span>`;
                 }
-            });
-        });
-
-        const searchInput = document.getElementById('search-input');
-        const autocompleteDropdown = document.createElement('div');
-        autocompleteDropdown.className = 'absolute z-10 w-full theme-container border rounded-lg mt-1 max-h-40 overflow-y-auto';
-        searchInput.parentNode.appendChild(autocompleteDropdown);
-
-        searchInput.addEventListener('input', () => {
-            const query = searchInput.value;
-            autocompleteDropdown.innerHTML = '';
-            if (query.length > 2) {
-                fetch(`/search-autocomplete/?q=${query}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        data.suggestions.forEach(suggestion => {
-                            const div = document.createElement('div');
-                            div.className = 'p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer';
-                            div.textContent = suggestion;
-                            div.addEventListener('click', () => {
-                                searchInput.value = suggestion;
-                                autocompleteDropdown.classList.add('hidden');
-                                window.location.href = `{% url 'marketplace:search_products' %}?q=${suggestion}`;
-                            });
-                            autocompleteDropdown.appendChild(div);
-                        });
-                        if (data.suggestions.length > 0) {
-                            autocompleteDropdown.classList.remove('hidden');
-                        } else {
-                            autocompleteDropdown.classList.add('hidden');
-                        }
-                    });
-            } else {
-                autocompleteDropdown.classList.add('hidden');
-            }
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!searchInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
-                autocompleteDropdown.classList.add('hidden');
-            }
-        });
-
-        document.querySelectorAll('.theme-container button').forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
             });
         });
     </script>

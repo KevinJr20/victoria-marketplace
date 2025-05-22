@@ -8,7 +8,16 @@
             <p>Email: {{ user.email }}</p>
             <p>Phone: {{ user.phone_number|default:"Not provided" }}</p>
             <p>Bio: {{ profile.bio|default:"No bio yet." }}</p>
+            <a href="{% url 'marketplace:update_profile' %}" class="theme-button py-2 px-4 rounded-lg mt-4 inline-block">Update Profile</a>
         </div>
+
+        <!-- Profile Section -->
+        {% if profile %}
+            <p><strong>Username:</strong> {{ profile.user.username }}</p>
+            <p><strong>Email:</strong> {{ profile.user.email }}</p>
+        {% else %}
+            <p>No profile exists. <a href="{% url 'marketplace:update_profile' %}" class="theme-link">Create one</a>.</p>
+        {% endif %}
 
         <!-- Order History -->
         <div class="theme-container rounded-lg shadow-md p-6 mb-8">

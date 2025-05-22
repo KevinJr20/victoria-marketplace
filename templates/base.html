@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Victoria Marketplace {% block title %}{% endblock %}</title>
+    {% load static %}
+    <link rel="icon" type="image/x-icon" href="{% static 'logo.png' %}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
@@ -15,6 +17,7 @@
             --card-bg: #ffffff;
             --button-bg: #3b82f6;
             --button-hover: #2563eb;
+            --button-text: #ffffff;
             --nav-bg: #ffffff;
             --nav-text: #1f2937;
             --link-hover: #3b82f6;
@@ -29,6 +32,7 @@
             --card-bg: #2d3748;
             --button-bg: #10b981;
             --button-hover: #059669;
+            --button-text: #ffffff;
             --nav-bg: #2d3748;
             --nav-text: #f9fafb;
             --link-hover: #10b981;
@@ -70,7 +74,7 @@
 
         .theme-button {
             background-color: var(--button-bg);
-            color: white;
+            color: var(--button-text);
             border: none;
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
@@ -116,6 +120,24 @@
             opacity: 1;
         }
 
+        .search-container input {
+            width: 200px;
+            transition: width 0.5s ease, padding 0.5s ease;
+        }
+        .search-container input:focus {
+            width: 300px;
+        }
+        #filter-options, #category-options {
+            display: none;
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        #filter-options.show, #category-options.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         input, textarea, select {
             background-color: var(--card-bg);
             color: var(--text-color);
@@ -144,6 +166,26 @@
             background-color: var(--placeholder-bg);
             color: var(--placeholder-text);
             transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 640px) {
+            .search-container input {
+                width: 100%;
+            }
+            .search-container input:focus {
+                width: 100%;
+            }
+            #category-options {
+                width: 100% !important;
+                max-width: 180px;
+                left: 0;
+            }
+            #filter-options {
+                width: 100% !important;
+                max-width: 240px;
+                left: 0;
+            }
         }
     </style>
 </head>
@@ -204,7 +246,7 @@
     <script>
         const themeToggle = document.getElementById('theme-toggle');
         const html = document.documentElement;
-        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
 
         document.addEventListener('DOMContentLoaded', () => {
             const savedTheme = '{{ request.session.theme|default:"light" }}';
@@ -259,6 +301,90 @@
         backToTop.addEventListener('click', (e) => {
             e.preventDefault();
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Animated Search Bar
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.addEventListener('focus', () => {
+                searchInput.classList.add('focused');
+            });
+            searchInput.addEventListener('blur', () => {
+                searchInput.classList.remove('focused');
+            });
+
+            // Autocomplete Logic
+            const autocompleteDropdown = document.createElement('div');
+            autocompleteDropdown.className = 'absolute z-20 w-full bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl mt-2 max-h-48 overflow-y-auto shadow-sm';
+            searchInput.parentNode.appendChild(autocompleteDropdown);
+
+            searchInput.addEventListener('input', () => {
+                const query = searchInput.value;
+                autocompleteDropdown.innerHTML = '';
+                if (query.length > 2) {
+                    fetch(`/search-autocomplete/?q=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            data.suggestions.forEach(suggestion => {
+                                const div = document.createElement('div');
+                                div.className = 'p-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-[var(--text-color)] text-sm';
+                                div.textContent = suggestion;
+                                div.addEventListener('click', () => {
+                                    searchInput.value = suggestion;
+                                    autocompleteDropdown.classList.add('hidden');
+                                    window.location.href = `{% url 'marketplace:search_products' %}?q=${suggestion}`;
+                                });
+                                autocompleteDropdown.appendChild(div);
+                            });
+                            if (data.suggestions.length > 0) {
+                                autocompleteDropdown.classList.remove('hidden');
+                            } else {
+                                autocompleteDropdown.classList.add('hidden');
+                            }
+                        });
+                } else {
+                    autocompleteDropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        // Category Button Toggle
+        const categoryBtn = document.getElementById('category-btn');
+        const categoryOptions = document.getElementById('category-options');
+        if (categoryBtn && categoryOptions) {
+            categoryBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Category button clicked");
+                categoryOptions.classList.toggle('show');
+                if (filterOptions) filterOptions.classList.remove('show'); // Close filter options if open
+            });
+        }
+
+        // Filter Button Toggle
+        const filterBtn = document.getElementById('filter-btn');
+        const filterOptions = document.getElementById('filter-options');
+        if (filterBtn && filterOptions) {
+            filterBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Filter button clicked");
+                filterOptions.classList.toggle('show');
+                if (categoryOptions) categoryOptions.classList.remove('show'); // Close category options if open
+            });
+        }
+
+        // Close Dropdowns When Clicking Outside
+        document.addEventListener('click', (e) => {
+            if (categoryBtn && categoryOptions && !categoryBtn.contains(e.target) && !categoryOptions.contains(e.target)) {
+                categoryOptions.classList.remove('show');
+            }
+            if (filterBtn && filterOptions && !filterBtn.contains(e.target) && !filterOptions.contains(e.target)) {
+                filterOptions.classList.remove('show');
+            }
+            if (searchInput && !searchInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+                autocompleteDropdown.classList.add('hidden');
+            }
         });
     </script>
 </body>
