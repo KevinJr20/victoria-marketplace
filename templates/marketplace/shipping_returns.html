@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto px-4 py-8">
+        <div class="theme-container rounded-lg shadow-md p-6">
+            <h1 class="text-3xl font-bold mb-4">Shipping & Returns</h1>
+            <p class="mb-4">We offer fast and reliable shipping within Kisumu, with delivery times of 1-3 days. All products are shipped with care to ensure they arrive in perfect condition.</p>
+            <p class="mb-4">Returns are accepted within 7 days of delivery if the product is defective. Contact us at <a href="mailto:support@victoriamarketplace.com" class="theme-link hover:underline">support@victoriamarketplace.com</a> for assistance.</p>
+            <a href="{% url 'marketplace:home' %}" class="theme-link hover:underline">Back to Home</a>
+        </div>
+    </div>
+{% endblock %}

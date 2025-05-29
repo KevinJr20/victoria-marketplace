@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto px-4 py-8">
+        <div class="theme-container rounded-lg shadow-md p-6">
+            <h1 class="text-3xl font-bold mb-4">Blog</h1>
+            <p class="mb-4">Stay updated with the latest news, tips, and stories from Victoria Marketplace. Check out our recent posts:</p>
+            <ul class="list-disc pl-5 mb-4">
+                <li><a href="#" class="theme-link hover:underline">Top 5 Local Products to Try</a></li>
+                <li><a href="#" class="theme-link hover:underline">How to Shop Smart Online</a></li>
+            </ul>
+            <a href="{% url 'marketplace:home' %}" class="theme-link hover:underline">Back to Home</a>
+        </div>
+    </div>
+{% endblock %}

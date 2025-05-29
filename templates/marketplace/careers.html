@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto px-4 py-8">
+        <div class="theme-container rounded-lg shadow-md p-6">
+            <h1 class="text-3xl font-bold mb-4">Careers</h1>
+            <p class="mb-4">Join the Victoria Marketplace team and be part of a growing community-driven platform! We are always looking for passionate individuals to help us expand our reach and improve our services.</p>
+            <p class="mb-4">Current openings:</p>
+            <ul class="list-disc pl-5 mb-4">
+                <li>Customer Support Specialist</li>
+                <li>Marketing Coordinator</li>
+                <li>Software Developer</li>
+            </ul>
+            <a href="mailto:careers@victoriamarketplace.com" class="theme-button py-2 px-4 rounded-lg transition-colors duration-300">Apply Now</a>
+            <a href="{% url 'marketplace:home' %}" class="theme-link hover:underline mt-4 inline-block">Back to Home</a>
+        </div>
+    </div>
+{% endblock %}

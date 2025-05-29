@@ -47,6 +47,9 @@
             transition: background-color 0.3s ease, color 0.3s ease;
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         .theme-container {
@@ -60,6 +63,9 @@
             background-color: var(--nav-bg);
             color: var(--nav-text);
             transition: background-color 0.3s ease, color 0.3s ease;
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
 
         nav a {
@@ -168,6 +174,24 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
+        /* Footer Styling */
+        footer {
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 2rem 1rem;
+            margin-top: auto;
+        }
+
+        footer a {
+            color: var(--button-bg);
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: var(--button-hover);
+        }
+
         /* Responsive Adjustments */
         @media (max-width: 640px) {
             .search-container input {
@@ -235,9 +259,49 @@
         </div>
     </nav>
 
-    <div class="container mx-auto px-4 py-8">
-        {% block content %}{% endblock %}
+    <main class="flex-grow">
+        <div class="container mx-auto px-4 py-8">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer>
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Contact Us -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3">Contact Us</h3>
+                <p>Email: <a href="mailto:support@victoriamarketplace.com">support@victoriamarketplace.com</a></p>
+                <p>Phone: <a href="tel:+254791649771">+254791649771</a></p>
+                <p>Address: Kisumu, Kenya</p>
+            </div>
+            <!-- About -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3">About</h3>
+                <p><a href="{% url 'marketplace:about' %}" class="hover:underline">About Us</a></p>
+                <p><a href="{% url 'marketplace:careers' %}" class="hover:underline">Careers</a></p>
+                <p><a href="{% url 'marketplace:blog' %}" class="hover:underline">Blog</a></p>
+            </div>
+            <!-- Customer Service -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3">Customer Service</h3>
+                <p><a href="{% url 'marketplace:faqs' %}" class="hover:underline">FAQs</a></p>
+                <p><a href="{% url 'marketplace:shipping-returns' %}" class="hover:underline">Shipping & Returns</a></p>
+                <p><a href="{% url 'marketplace:track_order' %}" class="hover:underline">Track Order</a></p> <!-- Changed from track-order to track_order -->
+            </div>
+            <!-- Policies -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3">Policies</h3>
+                <p><a href="{% url 'marketplace:privacy-policy' %}" class="hover:underline">Privacy Policy</a></p>
+                <p><a href="{% url 'marketplace:terms-of-service' %}" class="hover:underline">Terms of Service</a></p>
+                <p><a href="{% url 'marketplace:refund-policy' %}" class="hover:underline">Refund Policy</a></p>
+            </div>
+        </div>
+        <div class="mt-6 text-center">
+            <p>© 2025 Victoria Marketplace. All rights reserved.</p>
+        </div>
     </div>
+</footer>
 
     <a href="#" id="back-to-top" class="fixed bottom-5 right-5 theme-button p-3 rounded-full hidden transition-colors duration-300">
         <i class="fas fa-arrow-up"></i>

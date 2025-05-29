@@ -16,7 +16,7 @@
             <p><strong>Username:</strong> {{ profile.user.username }}</p>
             <p><strong>Email:</strong> {{ profile.user.email }}</p>
         {% else %}
-            <p>No profile exists. <a href="{% url 'marketplace:update_profile' %}" class="theme-link">Create one</a>.</p>
+            <p>No profile? <a href="{% url 'marketplace:update_profile' %}" class="theme-link">Create one</a>.</p>
         {% endif %}
 
         <!-- Order History -->

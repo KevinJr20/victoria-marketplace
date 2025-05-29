@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto px-4 py-8">
+        <div class="theme-container rounded-lg shadow-md p-6">
+            <h1 class="text-3xl font-bold mb-4">About Us</h1>
+            <p class="mb-4">Welcome to Victoria Marketplace, your trusted local e-commerce platform based in Kisumu, Kenya. We connect local sellers with buyers, offering fresh products delivered straight to your door. Our mission is to empower the community by promoting local businesses and providing a seamless shopping experience.</p>
+            <p class="mb-4">Founded in 2025, we’ve grown to serve thousands of customers with a wide range of products, from fresh produce to handmade goods. Our commitment to quality and trust drives everything we do.</p>
+            <a href="{% url 'marketplace:home' %}" class="theme-link hover:underline">Back to Home</a>
+        </div>
+    </div>
+{% endblock %}

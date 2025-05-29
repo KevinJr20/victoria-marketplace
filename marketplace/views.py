@@ -10,6 +10,7 @@ from .models import Product, CartItem, Cart, Order, Category, Review
 from python_daraja import payment
 from django.conf import settings
 from django.db.models import Avg
+from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect
 from django.db.models import Sum, Count, Avg, F, ExpressionWrapper, fields
 from django.utils import timezone
@@ -35,15 +36,18 @@ paypalrestsdk.configure({
     "client_secret": settings.PAYPAL_CLIENT_SECRET,
 })
 
+@login_required
 def home(request):
     products = Product.objects.all()
     categories = Category.objects.all()
     cart_items = []
     cart_total = 0
+    cart_count = 0
     if request.user.is_authenticated:
         cart = Cart.objects.filter(user=request.user).first()
         if cart:
             cart_items = CartItem.objects.filter(cart=cart)
+            cart_count = cart_items.count()
             cart_total = sum(item.product.price * item.quantity for item in cart_items)
     product_reviews = {p.id: p.reviews.aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0.0 for p in products}
     for product in products:
@@ -55,6 +59,7 @@ def home(request):
     return render(request, 'marketplace/home.html', {
         'products': products,
         'cart_items': cart_items,
+        'cart_count': cart_count,  # Added for JavaScript compatibility
         'cart_total': cart_total,
         'categories': categories,
     })
@@ -194,30 +199,38 @@ def update_profile(request):
 
 
 @login_required
+@require_POST
 def add_to_cart(request, product_id):
-    if request.method == 'POST':
-        try:
-            product = Product.objects.get(id=product_id)
-            # Delete any existing carts for the user to ensure only one active cart
-            Cart.objects.filter(user=request.user).delete()
-            cart, created = Cart.objects.get_or_create(user=request.user)
-            logger.info(f"Cart created/updated for user {request.user.username}: {cart.id}")
-            cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-            if not created:
-                cart_item.quantity += 1
-                cart_item.save()
-                logger.info(f"Cart item {cart_item.id} quantity updated to {cart_item.quantity}")
-            else:
-                logger.info(f"New cart item {cart_item.id} created for product {product.id}")
-            cart_count = CartItem.objects.filter(cart=cart).count()
-            cart_total = sum(item.product.price * item.quantity for item in CartItem.objects.filter(cart=cart))
-            return JsonResponse({'success': True, 'cart_count': cart_count, 'cart_total': cart_total})
-        except Product.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Product not found'})
-        except Exception as e:
-            logger.error(f"Error adding to cart: {str(e)}")
-            return JsonResponse({'success': False, 'message': 'An error occurred'})
-    return JsonResponse({'success': False})
+    try:
+        data = json.loads(request.body)
+        product = get_object_or_404(Product, id=product_id)
+   
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        logger.info(f"Cart retrieved/created for user {request.user.username}: {cart.id}")
+        quantity = int(data.get('quantity', 1))  
+        cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+        if not created:
+            cart_item.quantity += quantity
+            cart_item.save()
+            logger.info(f"Cart item {cart_item.id} quantity updated to {cart_item.quantity}")
+        else:
+            cart_item.quantity = quantity 
+            cart_item.save()
+            logger.info(f"New cart item {cart_item.id} created for product {product.id}")
+        cart_count = CartItem.objects.filter(cart=cart).count()
+        cart_total = sum(item.product.price * item.quantity for item in CartItem.objects.filter(cart=cart))
+        return JsonResponse({
+            'success': True,
+            'cart_count': cart_count,
+            'cart_total': float(cart_total), 
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Invalid JSON data'}, status=400)
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Product not found'}, status=400)
+    except Exception as e:
+        logger.error(f"Error adding to cart: {str(e)}")
+        return JsonResponse({'success': False, 'message': 'An error occurred'}, status=500)
 
 @login_required
 def initiate_payment(request):
@@ -649,3 +662,34 @@ def update_order_total(sender, instance, created, **kwargs):
         total = sum(item.product.price * item.quantity for item in instance.cart_items.all())
         instance.total_price = total
         instance.save()
+        
+def about(request):
+    return render(request, 'marketplace/about.html', {'title': 'About Us'})
+
+def careers(request):
+    return render(request, 'marketplace/careers.html', {'title': 'Careers'})
+
+def blog(request):
+    return render(request, 'marketplace/blog.html', {'title': 'Blog'})
+
+def faqs(request):
+    return render(request, 'marketplace/faqs.html', {'title': 'FAQs'})
+
+def shipping_returns(request):
+    return render(request, 'marketplace/shipping_returns.html', {'title': 'Shipping & Returns'})
+
+def track_order(request):
+    order_number = request.GET.get('order_number')
+    context = {'title': 'Track Order'}
+    if order_number:
+        context['message'] = f"Tracking order {order_number}. (Placeholder)"
+    return render(request, 'marketplace/track_order.html', context)
+
+def privacy_policy(request):
+    return render(request, 'marketplace/privacy_policy.html', {'title': 'Privacy Policy'})
+
+def terms_of_service(request):
+    return render(request, 'marketplace/terms_of_service.html', {'title': 'Terms of Service'})
+
+def refund_policy(request):
+    return render(request, 'marketplace/refund_policy.html', {'title': 'Refund Policy'})

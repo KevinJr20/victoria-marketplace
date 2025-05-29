@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+  {% block content %}
+      <div class="container mx-auto px-4 py-8">
+          <div class="theme-container rounded-lg shadow-md p-6">
+              <h1 class="text-3xl font-bold mb-4">Track Your Order</h1>
+              <p class="mb-4">Enter your order number to track your delivery status:</p>
+              {% if message %}
+                  <p class="mb-4">{{ message }}</p>
+              {% endif %}
+              <form method="get" action="{% url 'marketplace:track_order' %}" class="mb-4">
+                  <input type="text" name="order_number" placeholder="Enter Order Number" class="p-2 rounded-xl w-full mb-2 focus:outline-none focus:ring-2 focus:ring-[var(--button-bg)] shadow-sm hover:shadow-md transition-all duration-300 text-base font-medium border border-[var(--border-color)]">
+                  <button type="submit" class="theme-button py-2 px-4 rounded-lg transition-colors duration-300">Track Now</button>
+              </form>
+              <p class="mb-4">You’ll receive a confirmation once your order is shipped. Check your email for updates.</p>
+              <a href="{% url 'marketplace:home' %}" class="theme-link hover:underline">Back to Home</a>
+          </div>
+      </div>
+  {% endblock %}

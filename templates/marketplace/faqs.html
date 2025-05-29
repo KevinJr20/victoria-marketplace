@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto px-4 py-8">
+        <div class="theme-container rounded-lg shadow-md p-6">
+            <h1 class="text-3xl font-bold mb-4">Frequently Asked Questions (FAQs)</h1>
+            <div class="mb-4">
+                <h2 class="text-xl font-semibold mb-2">General</h2>
+                <p><strong>Q: How do I place an order?</strong> A: Browse products, add to cart, and checkout with M-Pesa or card payment.</p>
+                <p><strong>Q: What payment methods are accepted?</strong> A: Currently, we accept M-Pesa and card payments. We're working on integrating PayPal payments as well. Stay tuned!</p>
+            </div>
+            <div class="mb-4">
+                <h2 class="text-xl font-semibold mb-2">Shipping</h2>
+                <p><strong>Q: How long does delivery take?</strong> A: 1-3 days within Kisumu.</p>
+            </div>
+            <a href="{% url 'marketplace:home' %}" class="theme-link hover:underline">Back to Home</a>
+        </div>
+    </div>
+{% endblock %}
