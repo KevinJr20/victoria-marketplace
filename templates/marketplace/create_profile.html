@@ -3,16 +3,15 @@
 {% block content %}
     <div class="container mx-auto px-4 py-8">
         <div class="theme-container rounded-lg shadow-md p-6 max-w-md mx-auto">
-            <h2 class="text-2xl font-semibold mb-6 text-center">Update Your Profile</h2>
+            <h2 class="text-2xl font-semibold mb-6 text-center">Create Your Profile</h2>
             
-            <!-- Profile Update Form -->
+            <!-- Profile Creation Form -->
             <form method="post" class="space-y-6">
                 {% csrf_token %}
                 
                 <!-- Profile Fields -->
                 <div class="space-y-4">
-                    <h3 class="text-lg font-semibold mb-4">Profile Information</h3>
-                    {% for field in profile_form %}
+                    {% for field in form %}
                         <div class="flex flex-col">
                             <label for="{{ field.id_for_label }}" class="block text-sm font-medium mb-1 text-[var(--text-color)]">
                                 {{ field.label }}
@@ -42,42 +41,10 @@
                     {% endfor %}
                 </div>
 
-                <!-- Password Change Fields -->
-                <div class="space-y-4">
-                    <h3 class="text-lg font-semibold mb-4">Change Password</h3>
-                    {% for field in password_form %}
-                        <div class="flex flex-col">
-                            <label for="{{ field.id_for_label }}" class="block text-sm font-medium mb-1 text-[var(--text-color)]">
-                                {{ field.label }}
-                                {% if field.field.required %}
-                                    <span class="text-red-500">*</span>
-                                {% endif %}
-                            </label>
-                            <input 
-                                type="{{ field.widget.input_type|default:'password' }}" 
-                                name="{{ field.name }}" 
-                                id="{{ field.id_for_label }}" 
-                                class="p-2 border rounded-lg w-full bg-[var(--card-bg)] text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[var(--button-bg)] shadow-sm hover:shadow-md transition-all duration-300"
-                                {% if field.field.required %}required{% endif %}
-                            >
-                            {% if field.errors %}
-                                <div class="text-red-500 text-sm mt-1">
-                                    {% for error in field.errors %}
-                                        {{ error }}<br>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            {% if field.help_text %}
-                                <p class="text-sm text-[var(--placeholder-text)] mt-1">{{ field.help_text }}</p>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                </div>
-
                 <!-- Form Actions -->
                 <div class="flex justify-between items-center mt-6">
                     <button type="submit" class="theme-button py-2 px-6 rounded-lg transition-colors duration-300">
-                        Save Changes
+                        Create Profile
                     </button>
                     <a href="{% url 'marketplace:profile' %}" class="theme-link hover:underline">
                         Cancel

@@ -22,6 +22,7 @@ from .models import Profile
 from .forms import CustomUserCreationForm, CustomAuthenticationForm, ProductForm, UserRegistrationForm, UpdateProfileForm, UpdatePasswordForm
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from .forms import UserProfileForm
 import logging
 import json
 import stripe
@@ -160,10 +161,23 @@ def profile(request):
         'user': request.user
     })
 
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
+@login_required
+def create_profile(request):
+    # If the user already has profile details, redirect to update_profile
+    if request.user.first_name or request.user.last_name or request.user.email:
+        messages.info(request, 'You already have a profile. You can update it here.')
+        return redirect('marketplace:update_profile')
+
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile has been created successfully.')
+            return redirect('marketplace:profile')
+    else:
+        form = UserProfileForm(instance=request.user)
+    
+    return render(request, 'marketplace/create_profile.html', {'form': form})
 
 def update_profile(request):
     try:
@@ -204,25 +218,41 @@ def add_to_cart(request, product_id):
     try:
         data = json.loads(request.body)
         product = get_object_or_404(Product, id=product_id)
-   
+        quantity = int(data.get('quantity', 1))
+
+        # Check stock availability
+        if product.stock < quantity:
+            return JsonResponse({
+                'success': False,
+                'message': f'Only {product.stock} items available in stock.'
+            }, status=400)
+
         cart, created = Cart.objects.get_or_create(user=request.user)
         logger.info(f"Cart retrieved/created for user {request.user.username}: {cart.id}")
-        quantity = int(data.get('quantity', 1))  
         cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
         if not created:
-            cart_item.quantity += quantity
-            cart_item.save()
-            logger.info(f"Cart item {cart_item.id} quantity updated to {cart_item.quantity}")
+            new_quantity = cart_item.quantity + quantity
+            if new_quantity > product.stock:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Cannot add {new_quantity} items. Only {product.stock} available in stock.'
+                }, status=400)
+            cart_item.quantity = new_quantity
         else:
-            cart_item.quantity = quantity 
-            cart_item.save()
-            logger.info(f"New cart item {cart_item.id} created for product {product.id}")
+            cart_item.quantity = quantity
+        cart_item.save()
+        logger.info(f"Cart item {cart_item.id} updated/created with quantity {cart_item.quantity}")
+
+        # Update product stock
+        product.stock -= quantity
+        product.save()
+
         cart_count = CartItem.objects.filter(cart=cart).count()
         cart_total = sum(item.product.price * item.quantity for item in CartItem.objects.filter(cart=cart))
         return JsonResponse({
             'success': True,
             'cart_count': cart_count,
-            'cart_total': float(cart_total), 
+            'cart_total': float(cart_total),
         })
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'message': 'Invalid JSON data'}, status=400)
@@ -230,6 +260,67 @@ def add_to_cart(request, product_id):
         return JsonResponse({'success': False, 'message': 'Product not found'}, status=400)
     except Exception as e:
         logger.error(f"Error adding to cart: {str(e)}")
+        return JsonResponse({'success': False, 'message': 'An error occurred'}, status=500)
+    
+@login_required
+@require_POST
+def update_cart(request, cart_item_id):
+    try:
+        data = json.loads(request.body)
+        quantity = int(data.get('quantity', 1))
+        cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
+        product = cart_item.product
+
+        # Check stock
+        if quantity > product.stock + cart_item.quantity:
+            return JsonResponse({
+                'success': False,
+                'message': f'Cannot update to {quantity} items. Only {product.stock + cart_item.quantity} available in stock.'
+            }, status=400)
+
+        # Adjust stock
+        stock_change = cart_item.quantity - quantity
+        product.stock += stock_change
+        product.save()
+
+        cart_item.quantity = quantity
+        cart_item.save()
+        cart = Cart.objects.get(user=request.user)
+        cart_count = CartItem.objects.filter(cart=cart).count()
+        cart_total = sum(item.product.price * item.quantity for item in CartItem.objects.filter(cart=cart))
+        return JsonResponse({
+            'success': True,
+            'cart_count': cart_count,
+            'cart_total': float(cart_total),
+        })
+    except CartItem.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Cart item not found'}, status=400)
+    except Exception as e:
+        logger.error(f"Error updating cart: {str(e)}")
+        return JsonResponse({'success': False, 'message': 'An error occurred'}, status=500)
+
+@login_required
+@require_POST
+def remove_from_cart(request, cart_item_id):
+    try:
+        cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
+        # Restore stock
+        product = cart_item.product
+        product.stock += cart_item.quantity
+        product.save()
+        cart_item.delete()
+        cart = Cart.objects.get(user=request.user)
+        cart_count = CartItem.objects.filter(cart=cart).count()
+        cart_total = sum(item.product.price * item.quantity for item in CartItem.objects.filter(cart=cart))
+        return JsonResponse({
+            'success': True,
+            'cart_count': cart_count,
+            'cart_total': float(cart_total),
+        })
+    except CartItem.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Cart item not found'}, status=400)
+    except Exception as e:
+        logger.error(f"Error removing from cart: {str(e)}")
         return JsonResponse({'success': False, 'message': 'An error occurred'}, status=500)
 
 @login_required

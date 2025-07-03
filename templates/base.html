@@ -438,18 +438,50 @@
             });
         }
 
-        // Close Dropdowns When Clicking Outside
-        document.addEventListener('click', (e) => {
-            if (categoryBtn && categoryOptions && !categoryBtn.contains(e.target) && !categoryOptions.contains(e.target)) {
-                categoryOptions.classList.remove('show');
-            }
-            if (filterBtn && filterOptions && !filterBtn.contains(e.target) && !filterOptions.contains(e.target)) {
-                filterOptions.classList.remove('show');
-            }
-            if (searchInput && !searchInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+        document.addEventListener('DOMContentLoaded', () => {
+    const autocompleteDropdown = document.createElement('div');
+    autocompleteDropdown.className = 'absolute z-20 w-full bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl mt-2 max-h-48 overflow-y-auto shadow-sm';
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.parentNode.appendChild(autocompleteDropdown);
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value;
+            autocompleteDropdown.innerHTML = '';
+            if (query.length > 2) {
+                fetch(`/search-autocomplete/?q=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.suggestions.forEach(suggestion => {
+                            const div = document.createElement('div');
+                            div.className = 'p-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-[var(--text-color)] text-sm';
+                            div.textContent = suggestion;
+                            div.addEventListener('click', () => {
+                                searchInput.value = suggestion;
+                                autocompleteDropdown.classList.add('hidden');
+                                window.location.href = `{% url 'marketplace:search_products' %}?q=${suggestion}`;
+                            });
+                            autocompleteDropdown.appendChild(div);
+                        });
+                        if (data.suggestions.length > 0) {
+                            autocompleteDropdown.classList.remove('hidden');
+                        } else {
+                            autocompleteDropdown.classList.add('hidden');
+                        }
+                    });
+            } else {
                 autocompleteDropdown.classList.add('hidden');
             }
         });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+                autocompleteDropdown.classList.add('hidden');
+            }
+        });
+    }
+});
     </script>
 </body>
 </html>

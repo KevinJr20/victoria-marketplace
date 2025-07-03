@@ -1,55 +1,94 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-semibold text-gray-800 mb-6">Your Cart</h1>
-        {% if messages %}
-            <div class="mb-4">
-                {% for message in messages %}
-                    <div class="p-2 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-        {% if cart_items_with_subtotal %}
-            <div class="space-y-4">
+<div class="container mx-auto px-4 py-10 min-h-screen">
+    <h1 class="text-3xl font-bold text-gray-900 mb-10">Your Basket</h1>
+
+    {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+                <div class="p-3 rounded-md text-sm font-medium {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %} animate-fade-in">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if cart_items_with_subtotal %}
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-12 w-full">
+            <!-- Cart Items -->
+            <div class="xl:col-span-2 space-y-8">
                 {% for entry in cart_items_with_subtotal %}
-                    <div class="bg-white rounded-lg shadow-md p-4 flex flex-col sm:flex-row items-center justify-between gap-4 transform transition-all duration-300 hover:shadow-xl">
+                    <div class="flex items-start bg-white shadow rounded-lg p-6 gap-6 border border-gray-200 hover:shadow-md transition-all duration-300">
+                        <img src="{{ entry.item.product.image_url }}" alt="{{ entry.item.product.name }}" class="w-28 h-28 object-cover rounded-md">
                         <div class="flex-1">
                             <h2 class="text-lg font-semibold text-gray-800">{{ entry.item.product.name }}</h2>
-                            <p class="text-gray-600">KSh {{ entry.item.product.price }} x {{ entry.item.quantity }}</p>
+                            <p class="text-sm text-gray-500 mt-1">
+                                {% if entry.item.product.discount_price %}
+                                    <span class="line-through text-red-400">KSh {{ entry.item.product.price }}</span>
+                                    <span class="ml-2 inline-block bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">KSh {{ entry.item.product.discount_price }}</span>
+                                {% else %}
+                                    KSh {{ entry.item.product.price }}
+                                {% endif %}
+                                × {{ entry.item.quantity }}
+                            </p>
+                            <div class="flex items-center gap-4 mt-3">
+                                <form method="post" class="flex items-center gap-2" onsubmit="return confirm('Update this item? Quantity 0 will remove it.');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="update">
+                                    <input type="hidden" name="item_id" value="{{ entry.item.id }}">
+                                    <input type="number" name="quantity" value="{{ entry.item.quantity }}" min="0" class="w-16 p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                                    <button type="submit" class="text-blue-600 hover:underline">Update</button>
+                                </form>
+                                <form method="post" onsubmit="return confirm('Remove this item?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="item_id" value="{{ entry.item.id }}">
+                                    <button type="submit" class="text-red-600 hover:underline">Remove</button>
+                                </form>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-4">
-                            <form method="post" class="flex items-center gap-2" onsubmit="return confirm('Are you sure you want to update this item? Setting quantity to 0 will remove it.');">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="update">
-                                <input type="hidden" name="item_id" value="{{ entry.item.id }}">
-                                <input type="number" name="quantity" value="{{ entry.item.quantity }}" min="0" class="w-16 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <button type="submit" class="text-blue-600 hover:underline">Update</button>
-                            </form>
-                            <form method="post" onsubmit="return confirm('Are you sure you want to remove this item?');">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="item_id" value="{{ entry.item.id }}">
-                                <button type="submit" class="text-red-600 hover:underline">Remove</button>
-                            </form>
-                        </div>
-                        <p class="text-gray-800 font-bold">KSh {{ entry.subtotal }}</p>
+                        <p class="text-lg font-bold text-gray-800">KSh {{ entry.subtotal }}</p>
                     </div>
                 {% endfor %}
-                <div class="mt-6 bg-white p-4 rounded-lg shadow-md">
-                    <h2 class="text-xl font-semibold text-gray-800">Total: KSh {{ cart_total }}</h2>
-                    <a href="{% url 'marketplace:checkout' %}" class="mt-4 inline-block bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300">
-                        Proceed to Checkout
-                    </a>
+            </div>
+
+            <!-- Summary -->
+            <div class="bg-gray-50 p-6 rounded-lg shadow-md space-y-4 h-fit">
+                <h2 class="text-xl font-semibold text-gray-900">Order Summary</h2>
+                <div class="flex justify-between text-gray-700">
+                    <span>Subtotal</span>
+                    <span>KSh {{ cart_total }}</span>
+                </div>
+                <div class="flex justify-between text-gray-700">
+                    <span>Shipping</span>
+                    <span>Free</span>
+                </div>
+                <hr class="my-2 border-gray-200">
+                <div class="flex justify-between font-bold text-gray-900 text-lg">
+                    <span>Total</span>
+                    <span>KSh {{ cart_total }}</span>
+                </div>
+                <input type="text" placeholder="Promo Code" class="w-full p-2 border rounded-md mt-4 focus:ring-2 focus:ring-blue-500" />
+                <a href="{% url 'marketplace:checkout' %}" class="w-full bg-orange-500 text-white py-3 rounded-md text-center hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 dark:bg-orange-600 dark:hover:bg-orange-700 dark:text-gray-100 dark:focus:ring-orange-400 transition-colors duration-300 font-medium block">
+                    Proceed to Checkout
+                </a>
+                <div class="flex justify-center gap-4 mt-4">
+                    <i class="fas fa-credit-card text-2xl text-gray-700 hover:text-gray-900 transition-colors duration-300"></i>
+                    <i class="fas fa-mobile-alt text-2xl text-gray-700 hover:text-gray-900 transition-colors duration-300"></i>
+                    <i class="fab fa-cc-paypal text-2xl text-gray-700 hover:text-gray-900 transition-colors duration-300"></i>
                 </div>
             </div>
-        {% else %}
-            <div class="text-center py-10">
-                <p class="text-gray-500 text-lg">Your cart is empty.</p>
-                <a href="{% url 'marketplace:home' %}" class="text-blue-600 hover:underline">Start Shopping</a>
-            </div>
-        {% endif %}
-    </div>
+        </div>
+    {% else %}
+        <div class="text-center py-20 bg-white rounded-lg shadow-md">
+            <p class="text-gray-500 text-xl mb-4">Your basket is empty.</p>
+            <a href="{% url 'marketplace:home' %}" class="text-blue-600 hover:underline text-lg font-medium">Start Shopping</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 {% endblock %}

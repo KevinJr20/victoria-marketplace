@@ -33,6 +33,11 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = ['name', 'description', 'price', 'image', 'category']
         
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+        
 class UpdateProfileForm(forms.ModelForm):
     class Meta:
         model = User
